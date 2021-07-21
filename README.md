@@ -16,7 +16,7 @@ To check which R packages are required by the package, please refer to [DESCRIPT
 ## How to run the app (linux)
 The app is **NOT deployed** yet, so you have to run it locally:
 
-* Method 2: the easiest way is to directly download and run the remote version of the app in one command:
+* Method 1: the easiest way is to directly download and run the remote version of the app in one command:
 
 ```
 # start an R environment, then:
@@ -35,20 +35,14 @@ shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/arch
   # clone the repository with git, go to the cloned directory
   git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
   cd comomodels-explore/
-  ```
-  * If you are using terminal R:
-
-    ```
-    # in terminal, start the R environment
-    Rscript comoexplore.Rproj
+  # in terminal, start an R environment
+  Rscript comoexplore.Rproj
     
-    # in R environment, make sure your working directory is comomodels-explore, and run the app:
-    setwd(".")
-    shiny::runApp(appDir = "R")
-    ```
-  * If you are using rstudio:
-
-      open the `R/app.R` file, and click the **Run App** button at the top of the editor.
+  # in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
+  setwd(".")
+  devtools::load_all()
+  shiny::runApp(appDir = "R")
+  ```
 
 Either way, you will see a local URL appearing on your R console, e.g.:
 ```

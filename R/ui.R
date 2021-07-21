@@ -1,0 +1,211 @@
+#
+# The user-interface definition of a shiny app object.
+#
+
+jscode <- "
+shinyjs.collapse = function(boxid) {
+$('#' + boxid).closest('.box').find('[data-widget=collapse]').click();
+}
+"
+
+header = dashboardHeader(title = "CoMo Models")
+
+# Interactive params (transmission params)
+sidebar = dashboardSidebar(
+  # SEIRD
+  conditionalPanel(condition="input.simulation == 'SEIRD_params'", #id='SEIRDp',
+                   # beta
+                   sliderInput(inputId = "beta", label = withMathJax("$$\\beta$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.800),
+                   # kappa
+                   sliderInput(inputId = "kappa", label = withMathJax("$$\\kappa$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.500),
+                   # gamma
+                   sliderInput(inputId = "gamma", label = withMathJax("$$\\gamma$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000),
+                   # mu
+                   sliderInput(inputId = "mu", label = withMathJax("$$\\mu$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0050),
+                   # # action button
+                   # actionButton("goButton", "Go!", class = "btn-success"),
+                   
+  ),
+
+  # SEIaImIsRD
+  conditionalPanel(condition="input.simulation == 'SEIaImIsRD_params'", #id='SEIaImIsRDp',
+                   # beta
+                   sliderInput(inputId = "sc.beta.ia", label = withMathJax("$$\\beta_{I_a}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.800),
+                   sliderInput(inputId = "sc.beta.im", label = withMathJax("$$\\beta_{I_m}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.900),
+                   sliderInput(inputId = "sc.beta.is", label = withMathJax("$$\\beta_{I_s}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 1.000),
+                   # kappa
+                   sliderInput(inputId = "sc.kappa", label = withMathJax("$$\\kappa$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.500),
+                   # omega
+                   sliderInput(inputId = "sc.omega", label = withMathJax("$$\\omega$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.500),
+                   # p_symptom
+                   sliderInput(inputId = "sc.p_symptom.im", label = withMathJax("$$\\eta_{E->I_m}$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.1400),
+                   sliderInput(inputId = "sc.p_symptom.is", label = withMathJax("$$\\eta_{E->I_s}$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0500),
+                   # gamma
+                   sliderInput(inputId = "sc.gamma.ia", label = withMathJax("$$\\gamma_{I_a}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.9000),
+                   sliderInput(inputId = "sc.gamma.im", label = withMathJax("$$\\gamma_{I_m}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.5000),
+                   sliderInput(inputId = "sc.gamma.is", label = withMathJax("$$\\gamma_{I_s}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.0500),
+                   # mu
+                   sliderInput(inputId = "sc.mu.ia", label = withMathJax("$$\\mu_{I_a}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.0050),
+                   sliderInput(inputId = "sc.mu.im", label = withMathJax("$$\\mu_{I_m}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.0500),
+                   sliderInput(inputId = "sc.mu.is", label = withMathJax("$$\\mu_{I_s}$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.3000)
+               ),
+
+  # SEIRDAge
+  conditionalPanel(condition="input.simulation == 'SEIRDAge_params'",
+                   # beta
+                   sliderInput(inputId = "age.beta", label = withMathJax("$$\\beta$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.800),
+                   # kappa
+                   sliderInput(inputId = "age.kappa", label = withMathJax("$$\\kappa$$"),
+                               min = 0.000, max = 1.000, step = 0.0001, value = 0.500),
+                   # gamma
+                   sliderInput(inputId = "age.gamma", label = withMathJax("$$\\gamma$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000),
+                   # mu
+                   sliderInput(inputId = "age.mu", label = withMathJax("$$\\mu$$"),
+                               min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0050),
+                   # input contact matrices
+                   fileInput(inputId = "age.contact.files", label = "Load contact matrices and population (.rda format)", 
+                             accept = ".rda", multiple = TRUE, placeholder = "Please select files all at once"), 
+                   # select country from the contact matrix info (allow one only)
+                   selectInput(inputId = "age.country", label = "Select country",
+                               choices = NULL, multiple = FALSE)
+                   )
+)
+
+
+body = dashboardBody(
+  # useShinyjs(),
+  # extendShinyjs(text = jscode, functions = c("winprint")),
+  tabsetPanel(
+    id = "simulation",
+    # SEIRD
+    tabPanel(title="SEIRD", value='SEIRD_params',
+             div(class = "col-sm-12 col-md-6 col-lg-auto",
+                 box(width = "100%", 
+                     title="Model",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = TRUE,
+                     tabBox(width = "100%",
+                            title = "", 
+                            tabPanel(title = "SEIRD Diagram",
+                                     grVizOutput(outputId = "model.flowchart")),
+                            tabPanel(title = "SEIRD ODE system",
+                                     fluidPage(uiOutput(outputId = 'dS'),
+                                               uiOutput(outputId = 'dE'),
+                                               uiOutput(outputId = 'dI'),
+                                               uiOutput(outputId = 'dR'),
+                                               uiOutput(outputId = 'dD')
+                                               )
+                                     )
+                            )
+                     ),
+                 box(width = "100%", 
+                     title="Simulation result",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                     plotlyOutput(outputId = "SEIRD")
+                     ),
+                 box(width = "100%", 
+                     title="R0",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                     verbatimTextOutput(outputId = "R0")
+                     )
+                 )
+             ),
+
+    # SEIaImIsRD
+    tabPanel(title="SEIaImIsRD", value='SEIaImIsRD_params',
+             div(class = "col-sm-12 col-md-6 col-lg-auto",
+                 box(width = "100%", 
+                     title="Model",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = TRUE,
+                     tabBox(width = "100%",
+                            title = "", 
+                            tabPanel(title = "SEIaImIsRD Diagram",
+                                     grVizOutput(outputId = "sc.model.flowchart")),
+                            tabPanel(title = "SEIaImIsRD ODE system",
+                                     fluidPage(uiOutput(outputId = 'sc.dS'),
+                                               uiOutput(outputId = 'sc.dE'),
+                                               uiOutput(outputId = 'sc.dI'),
+                                               uiOutput(outputId = 'sc.dR'),
+                                               uiOutput(outputId = 'sc.dD')
+                                     )
+                            )
+                     )
+                 ),
+                 box(width = "100%", 
+                     title="Simulation result",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                     plotlyOutput(outputId = "SEIaImIsRD")
+                 ),
+                 box(width = "100%", 
+                     title="R0",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                     verbatimTextOutput(outputId = "sc.R0")
+                     )
+                 )
+             ),
+
+    # SEIRDAge
+    tabPanel(title="SEIRDAge", value='SEIRDAge_params',
+             div(class = "col-sm-12 col-md-6 col-lg-auto", # row-sm-12 row-md-6 row-lg-auo",
+                 box(width = "100%", 
+                     title="Files loaded ",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                     verbatimTextOutput(outputId = "age.contact.names")),
+                 box(width = "100%", 
+                     title="Model",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = TRUE,
+                     tabBox(width = "100%",
+                            title = "", 
+                            tabPanel(title = "SEIRDAge Diagram",
+                                     grVizOutput(outputId = "age.model.flowchart")),
+                            tabPanel(title = "SEIRDAge ODE system",
+                                     fluidPage(uiOutput(outputId = 'age.dS'),
+                                               uiOutput(outputId = 'age.dE'),
+                                               uiOutput(outputId = 'age.dI'),
+                                               uiOutput(outputId = 'age.dR'),
+                                               uiOutput(outputId = 'age.dD')
+                                     )
+                            )
+                     )
+                 ),
+                 box(width = "100%", 
+                     title="Simulation result by compartment",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                     plotlyOutput(outputId = "SEIRDAge.by.compartment")
+                     ),
+                 box(width="100%",
+                     title="Simulation result by age",
+                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                     selectInput(inputId = "age_range.select", label = "Selected age range",
+                                 choices = NULL),
+                     plotlyOutput(outputId = "SEIRDAge.by.age")
+                     )
+                 )
+             )
+    )
+  )
+
+
+ui <- dashboardPage(
+  header = dashboardHeader(title = "CoMo Models"),
+  sidebar = sidebar,
+  body = body
+  )

@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# produced html files
+*.html
+
+# tmp folder
+tmp/*

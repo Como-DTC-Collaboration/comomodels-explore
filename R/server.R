@@ -1,7 +1,6 @@
 #
 # The server definition of a shiny app object.
 #
-
 server <- function(input, output, session) {
   
   rv <- reactiveValues()
@@ -10,80 +9,59 @@ server <- function(input, output, session) {
   # SEIRD
   #%%%%%%%%%
   # reactive buttons for modifying transmission params
-  observeEvent(input$control.params.beta, {
-    shinyjs::toggle(id="seird.params.beta")
-  })
-  
-  observeEvent(input$control.params.kappa, {
-    shinyjs::toggle(id="seird.params.kappa")
-  })
-  
-  observeEvent(input$control.params.gamma, {
-    shinyjs::toggle(id="seird.params.gamma")
-  })
-  
-  observeEvent(input$control.params.mu, {
-    #  cat("\nSidebar param config")
-    shinyjs::toggle(id="seird.params.mu")
-  })
-  # model diagram
-  output$model.flowchart <- renderGrViz(
-    
-    DiagrammeR::grViz("digraph {
+  # observeEvent(input$control.params.beta, {
+  #   shinyjs::toggle(id="seird.params.beta")
+  # })
 
+  # model diagram
+  output$model_flowchart <- renderGrViz(
+    
+    DiagrammeR::grViz("
+    digraph seird {
+    
       # initiate graph
       graph [layout = dot, rankdir = LR]
       
       # global node settings
-      node [shape = rectangle, fontname = Helvetica, style = filled, fillcolor = lightblue]#, fontcolor = gray35]
-      
-      # label nodes
-      S [label = 'S']
-      E [label =  'E']
-      I [label = 'I']
-      R [label =  'R']
-      D [label =  'D']
+      node [shape = box, fontname = Helvetica, fixedsize = true, 
+            style = filled, fillcolor = lightgray, width = 0.6]
+      S;E;I;R;D
+
+      node [shape = circle, fillcolor = lightblue, width = 0.3]
+      beta[label = <&#946;>];
+      kappa[label = <&#954;>];
+      mu[label = <&#956;>]; 
+      gamma[label =  <&#947;>];
       
       # edge definitions with the node IDs
-      S -> E [label='\u1d66'] 
-      E -> I -> D
-      I -> R [label='\u1d67']
+      edge [arrowhead=none]
+      S -> beta
+      E -> kappa
+      I -> {mu gamma}
+      edge [arrowhead=vee]
+      beta -> E
+      kappa -> I
+      mu -> D
+      gamma -> R 
       }") 
   )
-  output$testplot <- renderPlot({
-    par(mar = c(1, 1, 1, 1))
-    openplotmat()
-    elpos <- coordinates (c(1, 1, 2, 4))
-    fromto <- matrix(ncol = 2, byrow = TRUE, data = c(1, 2, 2, 3, 2, 4, 4, 7, 4, 8,3,5,3,6))
-    nr <- nrow(fromto)
-    arrpos <- matrix(ncol = 2, nrow = nr)
-    for (i in 1:nr)
-      arrpos[i, ] <- straightarrow (to = elpos[fromto[i, 2], ],
-                                    from = elpos[fromto[i, 1], ], lwd = 2, arr.pos = 0.6, arr.length = 0.5)
-    textellipse(elpos[1,], 0.1, lab = "start", box.col = "green",
-                shadow.col = "darkgreen", shadow.size = 0.005, cex = 1.5)
-    textrect (elpos[2,], 0.15, 0.05,lab = "found term?", box.col = "grey",
-              shadow.col = "darkblue", shadow.size = 0.005, cex = 1.5)
-    textrect (elpos[4,], 0.15, 0.05,lab = "related?", box.col = "grey",
-              shadow.col = "darkblue", shadow.size = 0.005, cex = 1.5)
-    textellipse(elpos[3,], 0.1, 0.1, lab = c("other","term"), box.col = "orange",
-                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
-    textellipse(elpos[7,], 0.1, 0.1, lab = c("make","a link"),box.col = "orange",
-                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
-    textellipse(elpos[8,], 0.1, 0.1, lab = c("new","article"),box.col = "orange",
-                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
-    textellipse(elpos[5,], 0.1, 0.1, lab = c("make","a link"),box.col = "orange",
-                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
-    textellipse(elpos[6,], 0.1, 0.1, lab = c("new","article"),box.col = "orange",
-                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
-    #
-    dd <- c(0.0, 0.025)
-    # actionButton(arrpos[2, 1] + 0.05, arrpos[2, 2], inputId = "control.params.beta", label = withMathJax("$\\beta$"))
-    text(arrpos[3, 1] - 0.05, arrpos[3, 2], "no")
-    text(arrpos[4, 1] + 0.05, arrpos[4, 2] + 0.05, "yes")
-    text(arrpos[5, 1] - 0.05, arrpos[5, 2] + 0.05, "no")
+
+  observe({
+    req(input$model_flowchart_click)
+    nodeid <- input$model_flowchart_click$id[1]
+    if(nodeid == "node6"){
+      shinyjs::toggle(id="seird.params.beta")
+    }else if(nodeid == "node7"){
+      shinyjs::toggle(id="seird.params.kappa")
+    }
+    else if(nodeid == "node8"){
+      shinyjs::toggle(id="seird.params.mu")
+    }
+    else if(nodeid == "node9"){
+      shinyjs::toggle(id="seird.params.gamma")
+    }
   })
-  
+ 
   # ODE system
   output$dS <- renderUI({
     withMathJax(
@@ -164,57 +142,69 @@ server <- function(input, output, session) {
   #%%%%%%%%%%%
   # SEIaImIsRD
   #%%%%%%%%%%%
-  observeEvent(input$control.params.sc.beta, {
-    shinyjs::toggle(id="sc.params.beta")
-  })
-  
-  observeEvent(input$control.params.sc.kappa, {
-    shinyjs::toggle(id="sc.params.kappa")
-  })
-  
-  observeEvent(input$control.params.sc.gamma, {
-    shinyjs::toggle(id="sc.params.gamma")
-  })
-  
-  observeEvent(input$control.params.mu, {
-    shinyjs::toggle(id="sc.params.mu")
-  })
-  
-  observeEvent(input$control.params.sc.p_symptom, {
-    shinyjs::toggle(id="sc.params.p_symptom")
-  })
-  
-  observeEvent(input$control.params.sc.omega, {
-    #  cat("\nSidebar param config")
-    shinyjs::toggle(id="sc.params.omega")
-  })
-  
+  # observeEvent(input$control.params.sc.beta, {
+  #   shinyjs::toggle(id="sc.params.beta")
+  # })
+
   # model diagram
-  output$sc.model.flowchart <- renderGrViz(
-    DiagrammeR::grViz("digraph {
+  output$sc_model_flowchart <- renderGrViz(
+    DiagrammeR::grViz("
+    digraph seiaimisrd {
 
       # initiate graph
-      graph [layout = dot, rankdir = LR]
+      graph [layout = neato, rankdir = LR]
       
       # global node settings
-      node [shape = rectangle, fontname = Helvetica, style = filled, fillcolor = lightblue]#, fontcolor = gray35]
-      
-      # label nodes
-      S [label = 'S']
-      E [label =  'E']
-      Ia [label = 'Ia']
-      Im [label = 'Im']
-      Is [label = 'Is']
-      R [label =  'R']
-      D [label =  'D']
+      node [shape = box, fontname = Helvetica, fixedsize = true, 
+            style = filled, fillcolor = lightgray, width = 0.6]
+      S;E;Ia;Im;Is;R;D
+
+      node [shape = circle, fillcolor = lightblue, width = 0.3]
+      beta[label = <&#946;>];
+      kappa[label = <&#954;>];
+      eta[label = <&#951;>];
+      mu[label = <&#956;>]; 
+      gamma[label =  <&#947;>];
+      omega[label = <&#969;>]
+
       
       # edge definitions with the node IDs
-      S -> E [label='\u1d66'] 
-      E -> {Ia Im Is}
-      {Ia Im Is} -> R 
-      {Ia Im Is} -> D
+      # edge definitions with the node IDs
+      edge [arrowhead=none]
+      S -> beta
+      E -> kappa
+      kappa -> eta
+      {Ia Im Is} -> mu 
+      {Ia Im Is} -> gamma
+      R -> omega
+
+      edge [arrowhead=vee]
+      beta -> E
+      eta -> {Ia Im Is}
+      mu -> D
+      gamma -> R
+      omega -> S
+
       }")
   )
+  
+  observe({
+    req(input$sc_model_flowchart_click)
+    nodeid <- input$sc_model_flowchart_click$id[1]
+    if(nodeid == "node8"){
+      shinyjs::toggle(id="sc.params.beta")
+    }else if(nodeid == "node9"){
+      shinyjs::toggle(id="sc.params.kappa")
+    }else if(nodeid == "node10"){
+      shinyjs::toggle(id="sc.params.p_symptom")
+    }else if(nodeid == "node11"){
+      shinyjs::toggle(id="sc.params.mu")
+    }else if(nodeid == "node12"){
+      shinyjs::toggle(id="sc.params.gamma")
+    }else if(nodeid == "node13"){
+      shinyjs::toggle(id="sc.params.omega")
+    }
+  })
   
   # ODE system
   output$sc.dS <- renderUI({
@@ -301,22 +291,9 @@ server <- function(input, output, session) {
   # SEIRDAge
   #%%%%%%%%%
   # reactive buttons for modifying transmission params
-  observeEvent(input$control.params.age.beta, {
-    shinyjs::toggle(id="age.params.beta")
-  })
-  
-  observeEvent(input$control.params.age.kappa, {
-    shinyjs::toggle(id="age.params.kappa")
-  })
-  
-  observeEvent(input$control.params.age.gamma, {
-    shinyjs::toggle(id="age.params.gamma")
-  })
-  
-  observeEvent(input$control.params.age.mu, {
-    #  cat("\nSidebar param config")
-    shinyjs::toggle(id="age.params.mu")
-  })
+  # observeEvent(input$control.params.age.beta, {
+  #   shinyjs::toggle(id="age.params.beta")
+  # })
 
   # list the file names of uploaded .rda files
   output$age.contact.names <- renderText({
@@ -360,28 +337,55 @@ server <- function(input, output, session) {
   })
   
   # model diagram
-  output$age.model.flowchart <- renderGrViz(
-    DiagrammeR::grViz("digraph {
-
+  output$age_model_flowchart <- renderGrViz(
+    
+    DiagrammeR::grViz("
+    digraph seirdage {
+    
       # initiate graph
       graph [layout = dot, rankdir = LR]
-
+      
       # global node settings
-      node [shape = rectangle, fontname = Helvetica, style = filled, fillcolor = lightblue]#, fontcolor = gray35]
+      node [shape = box, fontname = Helvetica, fixedsize = true, 
+            style = filled, fillcolor = lightgray, width = 0.6]
+      S;E;I;R;D
 
-      # label nodes
-      S [label = 'S']
-      E [label =  'E']
-      I [label = 'I']
-      R [label =  'R']
-      D [label =  'D']
-
+      node [shape = circle, fillcolor = lightblue, width = 0.3]
+      beta[label = <&#946;>];
+      kappa[label = <&#954;>];
+      mu[label = <&#956;>]; 
+      gamma[label =  <&#947;>];
+      
       # edge definitions with the node IDs
-      S -> E [label='\u1d66']
-      E -> I -> D
-      I -> R [label='\u1d67']
-      }")
+      edge [arrowhead=none]
+      S -> beta
+      E -> kappa
+      I -> {mu gamma}
+
+      edge [arrowhead=vee]
+      beta -> E
+      kappa -> I
+      mu -> D
+      gamma -> R 
+      }") 
   )
+  
+  observe({
+    req(input$age_model_flowchart_click)
+    nodeid <- input$age_model_flowchart_click$id[1]
+    if(nodeid == "node6"){
+      shinyjs::toggle(id="age.params.beta")
+    }else if(nodeid == "node7"){
+      shinyjs::toggle(id="age.params.kappa")
+    }
+    else if(nodeid == "node8"){
+      shinyjs::toggle(id="age.params.mu")
+    }
+    else if(nodeid == "node9"){
+      shinyjs::toggle(id="age.params.gamma")
+    }
+  })
+
   
   # ODE system
   output$age.dS <- renderUI({
@@ -517,9 +521,13 @@ server <- function(input, output, session) {
       return ()
     else{
       res <- age.model.simulation()
+      # set up color palette - more than 8 groups, need to be set manually
+      n.cols <- length(unique(res$age_range))
+      colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n.cols)
       model.plot <- ggplot(res, aes(x=time, y=value, colour=age_range)) +
         geom_line() +
         facet_grid(vars(compartment), space = "free", scales = "free") +
+        scale_color_manual(values = colors) +
         theme_classic()
       model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
       return (model.plot)
@@ -536,22 +544,12 @@ server <- function(input, output, session) {
       model.plot <- ggplot(res, aes(x=time, y=value)) +
         geom_line(aes(colour=compartment)) +
         scale_color_brewer(palette = "Set2") +
-        theme_classic() # +
-        # ggtitle(paste0("age range: ", age_range.select))
+        theme_classic()
       model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
       return(model.plot)
     }
   })
-  
-  # # R0 calculation
-  # output$R0 <- renderText({
-  #   model <- model0.age()
-  #   # 3. calculate R0
-  #   paste0("R0 = ", R0(model))
-  # }),
-
 }
 
-
-
-
+# beta [label='\u1d66'] 
+# gamma [label='\u1d67']

@@ -11,12 +11,13 @@
 
 ## 20210812
 * built conda environment yml for the package
-* Default sliderInputs for transmission params are toggled. Allow showing each param by clicking on corresponding activeButtons in the "Model" diagram panel
+* Default sliderInputs for transmission params are toggled. Display each param sliderInput bar only clicking on corresponding activeButtons in the "Model" diagram panel
+
+## 20210813
+* Display each param sliderInput bar only when clicking on corresponding nodes ub the "Model" diagram panel (Ben's suggestion)
 
 ## To do
 * SEIRDAge: data missing for some countries in population.rda
 * SEIRDAge: automatically identify how many contact matrices are loaded, get object names and process accordingly
 * Deploy
-* Move activeButtons for params onto the edges of the diagram
-* (Ben) - interactive diagrams & slider (one param slider only activated when clicking on the diagram): click on a parameter -> slider appear -> This might make it particularly easy to understand what each parameter corresponds to. (It would also reduce the number of sliders which were active at a given point in time.)
-* Add dependencies for a R shiny app package?
+* Docker environment?

@@ -10,6 +10,8 @@ In this app, the two components are written in two separate files: `R/ui.R` and 
 ## The core: comomodels
 The `R/global.R` file is the current sources of `comomodels`, which is copy-and-pasted from different branches of [comomodels](https://github.com/Como-DTC-Collaboration/como-models). Once we merge the branches and finalise the model, this file can be replaced by simply importing `library(comomodels)` in the beginning of `R/app.R`.
 
-[The shiny rstudio main website](https://shiny.rstudio.com/) is a good resource to explore the utilizations of shiny.
+## Useful resources for shiny development
+* [The shiny rstudio main website](https://shiny.rstudio.com/)
+* [Awesome R Shiny Resources & Extensions](https://paulvanderlaken.com/2021/02/16/awesome-r-shiny-resources-extensions/)
 
 TO BE CONTINUED...

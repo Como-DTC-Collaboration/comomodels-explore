@@ -62,7 +62,6 @@ Rscript comoexplore.Rproj
 # in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
 setwd(".")
 devtools::load_all()
-
 ## if you are using an interactive R session (e.g. RStudio):
 shiny::runApp(appDir = "R")
 ## otherwise, set `launch.browser=FALSE` if you are using a non-interactive R session and manually launch the browser in the next step:

@@ -126,14 +126,8 @@ sidebar = dashboardSidebar(
                            sliderInput(inputId = "sc.mu.is", label = withMathJax("$$\\mu_{I_s}$$"),
                                        min = 0.000, max = 1.000, step = 0.0001, value = 0.3000)
                            )
-                   )
+                       )
                    ),
-  
-  
-  
-  conditionalPanel(condition="input.simulation == 'SEIRD_params'", 
-                   
-  ),
   # SEIRDAge
   conditionalPanel(condition="input.simulation == 'SEIRDAge_params'",
                    # input contact matrices
@@ -194,15 +188,13 @@ body = dashboardBody(
                  box(width = "100%", 
                      title="Model",
                      collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
-                     actionButton(inputId = "control.params.kappa", label = withMathJax("$\\kappa$")),
-                     actionButton(inputId = "control.params.gamma", label = withMathJax("$\\gamma$")),
-                     actionButton(inputId = "control.params.mu", label = withMathJax("$\\mu$")),
+                     # actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
                      tabBox(width = "100%",
                             title = "", 
                             tabPanel(title = "SEIRD Diagram",
-                                     grVizOutput(outputId = "model.flowchart"),
-                                     plotOutput("testplot")),
+                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                     grVizOutput(outputId = "model_flowchart"),
+                                     ),
                             tabPanel(title = "SEIRD ODE system",
                                      fluidPage(uiOutput(outputId = 'dS'),
                                                uiOutput(outputId = 'dE'),
@@ -235,16 +227,12 @@ body = dashboardBody(
                  box(width = "100%", 
                      title="Model",
                      collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
-                     actionButton(inputId = "control.params.sc.kappa", label = withMathJax("$$\\kappa$$")),
-                     actionButton(inputId = "control.params.sc.gamma", label = withMathJax("$$\\gamma$$")),
-                     actionButton(inputId = "control.params.sc.omega", label = withMathJax("$$\\omega$$")),
-                     actionButton(inputId = "control.params.sc.p_symptom", label = withMathJax("$$\\eta$$")),
-                     actionButton(inputId = "control.params.sc.mu", label = withMathJax("$$\\mu$$")),
+                     # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
                      tabBox(width = "100%",
                             title = "", 
                             tabPanel(title = "SEIaImIsRD Diagram",
-                                     grVizOutput(outputId = "sc.model.flowchart")),
+                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                     grVizOutput(outputId = "sc_model_flowchart")),
                             tabPanel(title = "SEIaImIsRD ODE system",
                                      fluidPage(uiOutput(outputId = 'sc.dS'),
                                                uiOutput(outputId = 'sc.dE'),
@@ -278,14 +266,11 @@ body = dashboardBody(
                  box(width = "100%", 
                      title="Model",
                      collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = TRUE,
-                     actionButton(inputId = "control.params.age.beta", label = withMathJax("$\\beta$")),
-                     actionButton(inputId = "control.params.age.kappa", label = withMathJax("$\\kappa$")),
-                     actionButton(inputId = "control.params.age.gamma", label = withMathJax("$\\gamma$")),
-                     actionButton(inputId = "control.params.age.mu", label = withMathJax("$\\mu$")),
                      tabBox(width = "100%",
                             title = "", 
                             tabPanel(title = "SEIRDAge Diagram",
-                                     grVizOutput(outputId = "age.model.flowchart")),
+                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                     grVizOutput(outputId = "age_model_flowchart")),
                             tabPanel(title = "SEIRDAge ODE system",
                                      fluidPage(uiOutput(outputId = 'age.dS'),
                                                uiOutput(outputId = 'age.dE'),

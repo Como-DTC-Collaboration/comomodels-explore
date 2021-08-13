@@ -1,0 +1,27 @@
+name: comoexplore
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - defaults
+dependencies:
+  - r-base
+  - r-devtools
+  - r-shiny
+  - r-miniui
+  - r-shinydashboard
+  - r-shinyjs
+  - r-tidyverse
+  - r-forcats
+  - r-deSolve
+  - r-plotly
+  - r-ggplot2
+  - r-glue
+  - r-r.methodss3
+  - r-reshape2
+  - r-dplyr
+  - r-magrittr
+  - r-rlang
+  - r-DiagrammeR
+
+  

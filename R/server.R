@@ -3,11 +3,32 @@
 #
 
 server <- function(input, output, session) {
+  
+  rv <- reactiveValues()
+  
   #%%%%%%%%%
   # SEIRD
   #%%%%%%%%%
+  # reactive buttons for modifying transmission params
+  observeEvent(input$control.params.beta, {
+    shinyjs::toggle(id="seird.params.beta")
+  })
+  
+  observeEvent(input$control.params.kappa, {
+    shinyjs::toggle(id="seird.params.kappa")
+  })
+  
+  observeEvent(input$control.params.gamma, {
+    shinyjs::toggle(id="seird.params.gamma")
+  })
+  
+  observeEvent(input$control.params.mu, {
+    #  cat("\nSidebar param config")
+    shinyjs::toggle(id="seird.params.mu")
+  })
   # model diagram
   output$model.flowchart <- renderGrViz(
+    
     DiagrammeR::grViz("digraph {
 
       # initiate graph
@@ -27,9 +48,42 @@ server <- function(input, output, session) {
       S -> E [label='\u1d66'] 
       E -> I -> D
       I -> R [label='\u1d67']
-      }")
+      }") 
   )
-
+  output$testplot <- renderPlot({
+    par(mar = c(1, 1, 1, 1))
+    openplotmat()
+    elpos <- coordinates (c(1, 1, 2, 4))
+    fromto <- matrix(ncol = 2, byrow = TRUE, data = c(1, 2, 2, 3, 2, 4, 4, 7, 4, 8,3,5,3,6))
+    nr <- nrow(fromto)
+    arrpos <- matrix(ncol = 2, nrow = nr)
+    for (i in 1:nr)
+      arrpos[i, ] <- straightarrow (to = elpos[fromto[i, 2], ],
+                                    from = elpos[fromto[i, 1], ], lwd = 2, arr.pos = 0.6, arr.length = 0.5)
+    textellipse(elpos[1,], 0.1, lab = "start", box.col = "green",
+                shadow.col = "darkgreen", shadow.size = 0.005, cex = 1.5)
+    textrect (elpos[2,], 0.15, 0.05,lab = "found term?", box.col = "grey",
+              shadow.col = "darkblue", shadow.size = 0.005, cex = 1.5)
+    textrect (elpos[4,], 0.15, 0.05,lab = "related?", box.col = "grey",
+              shadow.col = "darkblue", shadow.size = 0.005, cex = 1.5)
+    textellipse(elpos[3,], 0.1, 0.1, lab = c("other","term"), box.col = "orange",
+                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
+    textellipse(elpos[7,], 0.1, 0.1, lab = c("make","a link"),box.col = "orange",
+                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
+    textellipse(elpos[8,], 0.1, 0.1, lab = c("new","article"),box.col = "orange",
+                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
+    textellipse(elpos[5,], 0.1, 0.1, lab = c("make","a link"),box.col = "orange",
+                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
+    textellipse(elpos[6,], 0.1, 0.1, lab = c("new","article"),box.col = "orange",
+                shadow.col = "red", shadow.size = 0.005, cex = 1.5)
+    #
+    dd <- c(0.0, 0.025)
+    # actionButton(arrpos[2, 1] + 0.05, arrpos[2, 2], inputId = "control.params.beta", label = withMathJax("$\\beta$"))
+    text(arrpos[3, 1] - 0.05, arrpos[3, 2], "no")
+    text(arrpos[4, 1] + 0.05, arrpos[4, 2] + 0.05, "yes")
+    text(arrpos[5, 1] - 0.05, arrpos[5, 2] + 0.05, "no")
+  })
+  
   # ODE system
   output$dS <- renderUI({
     withMathJax(
@@ -58,7 +112,6 @@ server <- function(input, output, session) {
   
   # model initialization
   model0 <- reactive({
-    # params
     beta <- input$beta
     kappa <- input$kappa
     gamma <- input$gamma
@@ -91,13 +144,14 @@ server <- function(input, output, session) {
     output <- run(model, t)
     # 5. plot
     # plot only output$states, not output$changes
-    model.plot <- plot_dataframe(output$states, x = "time", y = "value", c = "compartment")
+    model.plot <- plot_dataframe(output$states, x = "time", y = "value", c = "compartment") +
+                  scale_color_brewer(palette = "Set2")
     #  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
     ggplotly(p=model.plot)#, dynamicTicks = TRUE, originalData = FALSE)
     model.plot
   })
   outputOptions(output, "SEIRD", suspendWhenHidden = FALSE)
-
+  
   # R0 calculation
   output$R0 <- renderText({
     # input$goButton
@@ -110,6 +164,31 @@ server <- function(input, output, session) {
   #%%%%%%%%%%%
   # SEIaImIsRD
   #%%%%%%%%%%%
+  observeEvent(input$control.params.sc.beta, {
+    shinyjs::toggle(id="sc.params.beta")
+  })
+  
+  observeEvent(input$control.params.sc.kappa, {
+    shinyjs::toggle(id="sc.params.kappa")
+  })
+  
+  observeEvent(input$control.params.sc.gamma, {
+    shinyjs::toggle(id="sc.params.gamma")
+  })
+  
+  observeEvent(input$control.params.mu, {
+    shinyjs::toggle(id="sc.params.mu")
+  })
+  
+  observeEvent(input$control.params.sc.p_symptom, {
+    shinyjs::toggle(id="sc.params.p_symptom")
+  })
+  
+  observeEvent(input$control.params.sc.omega, {
+    #  cat("\nSidebar param config")
+    shinyjs::toggle(id="sc.params.omega")
+  })
+  
   # model diagram
   output$sc.model.flowchart <- renderGrViz(
     DiagrammeR::grViz("digraph {
@@ -136,7 +215,7 @@ server <- function(input, output, session) {
       {Ia Im Is} -> D
       }")
   )
-
+  
   # ODE system
   output$sc.dS <- renderUI({
     withMathJax(
@@ -162,7 +241,7 @@ server <- function(input, output, session) {
     withMathJax(
       helpText("$$\\frac{\\text{d}D}{\\text{d}t} = - \\sum_i{\\mu_i I_i}$$"))
   })
-
+  
   # model initialization
   model0.sc <- reactive({
     # params
@@ -185,7 +264,7 @@ server <- function(input, output, session) {
     R <- 0.00
     D <- 0.00
     
-
+    
     # 1. create the instance in class SEIaImIsRD
     model <- SEIaImIsRD()
     # 2. set up parameters and initial population
@@ -202,13 +281,14 @@ server <- function(input, output, session) {
     t <- seq(0, 2000, by = 1)
     model <- run(model, t)
     # 5. plot
-    model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment")
+    model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment") +
+                  scale_color_brewer(palette = "Set2")
     #  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
     model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
     model.plot
   })
   outputOptions(output, "SEIaImIsRD", suspendWhenHidden = FALSE)
-
+  
   # R0 calculation
   output$sc.R0 <- renderText({
     model <- model0.sc()
@@ -216,14 +296,32 @@ server <- function(input, output, session) {
     model <- R0(model)
     paste0("R0 = ", model@R0)
   })
-
+  
   #%%%%%%%%%
   # SEIRDAge
   #%%%%%%%%%
+  # reactive buttons for modifying transmission params
+  observeEvent(input$control.params.age.beta, {
+    shinyjs::toggle(id="age.params.beta")
+  })
+  
+  observeEvent(input$control.params.age.kappa, {
+    shinyjs::toggle(id="age.params.kappa")
+  })
+  
+  observeEvent(input$control.params.age.gamma, {
+    shinyjs::toggle(id="age.params.gamma")
+  })
+  
+  observeEvent(input$control.params.age.mu, {
+    #  cat("\nSidebar param config")
+    shinyjs::toggle(id="age.params.mu")
+  })
+
   # list the file names of uploaded .rda files
   output$age.contact.names <- renderText({
-   # names(input)[grepl("age.contact.file", names(input))]
-   input$age.contact.files[, 1]
+    # names(input)[grepl("age.contact.file", names(input))]
+    input$age.contact.files[, 1]
   })
   
   # load .rda files (contact matrices population)
@@ -248,7 +346,7 @@ server <- function(input, output, session) {
       return(rda)
     }
   })
-
+  
   # update input$age.country choices
   observeEvent(load.age.contact_matrices(),{
     if(is.null(input$age.contact.files))
@@ -284,7 +382,7 @@ server <- function(input, output, session) {
       I -> R [label='\u1d67']
       }")
   )
-
+  
   # ODE system
   output$age.dS <- renderUI({
     withMathJax(
@@ -310,7 +408,7 @@ server <- function(input, output, session) {
     withMathJax(
       helpText("$$\\frac{dD_i}{dt} = \\mu_i I_i $$"))
   })
-
+  
   # model initialization
   model0.age <- reactive({
     if(is.null(input$age.contact.files))
@@ -398,7 +496,7 @@ server <- function(input, output, session) {
       return(model)
     }
   })
-
+  
   # ODE simulation and plot
   ## simulation result
   age.model.simulation <- reactive({
@@ -412,7 +510,7 @@ server <- function(input, output, session) {
       return (res)
     }
   })
-
+  
   ## plot by compartment
   output$SEIRDAge.by.compartment <- renderPlotly({
     if(is.null(input$age.contact.files))
@@ -425,9 +523,9 @@ server <- function(input, output, session) {
         theme_classic()
       model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
       return (model.plot)
-     }
+    }
   })
-
+  
   ## plot by age groups
   output$SEIRDAge.by.age <- renderPlotly({
     if(is.null(input$age.contact.files))
@@ -437,17 +535,23 @@ server <- function(input, output, session) {
       res <- subset(res, age_range == input$age_range.select)
       model.plot <- ggplot(res, aes(x=time, y=value)) +
         geom_line(aes(colour=compartment)) +
-        # ggtitle(paste0("age range: ", age_range.select)) +
-        theme_classic()
+        scale_color_brewer(palette = "Set2") +
+        theme_classic() # +
+        # ggtitle(paste0("age range: ", age_range.select))
       model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
       return(model.plot)
-     }
+    }
   })
-
+  
   # # R0 calculation
   # output$R0 <- renderText({
   #   model <- model0.age()
   #   # 3. calculate R0
   #   paste0("R0 = ", R0(model))
   # }),
+
 }
+
+
+
+

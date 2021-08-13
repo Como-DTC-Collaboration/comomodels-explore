@@ -10,8 +10,28 @@ Currently we support three sub-models:
 ## Development
 To contribute to this repository, read [DEVELOPMENT.md](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DEVELOPMENT.md)
 
-## Dependencies
-To check which R packages are required by the package, please refer to [DESCRIPTION](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DESCRIPTION)
+## Installations
+### Dependencies
+To check which R packages are required by the package, please refer to [DESCRIPTION](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DESCRIPTION) or the conda environment list [comomodels-explore.yml](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/envs/comomodels-explore.yml)
+
+#### Install using `conda`
+
+If you have a number of dependencies not installed yet, instead of manually installing each of them, you can save time and energy by installing all dependencies in a `conda` environment:
+
+1. [Install conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
+2. Create a package-specific conda environment:
+```
+# clone the repository with git, go to the cloned directory:
+git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
+cd comomodels-explore
+
+# create a new conda environment (here with name "comoexplore") with all dependencies listed the provided .yml file:
+conda env create -f envs/comomodels-explore.yml
+
+# All dependenceis required by this package are now installed in comoexplore. Now activate the environment:
+conda activate comoexplore
+```
 
 ## How to run the app (linux)
 The app is **NOT deployed** yet, so you have to run it locally:
@@ -30,25 +50,31 @@ shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/arch
 
 * Method 2: you can first clone the git repository, then run the app:
 
-  ```
-  # (in terminal)
-  # clone the repository with git, go to the cloned directory
-  git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
-  cd comomodels-explore/
-  # in terminal, start an R environment
-  Rscript comoexplore.Rproj
-    
-  # in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
-  setwd(".")
-  devtools::load_all()
-  shiny::runApp(appDir = "R")
-  ```
+```
+# (in terminal)
+# clone the repository with git, go to the cloned directory:
+git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
+cd comomodels-explore/
 
-Either way, you will see a local URL appearing on your R console, e.g.:
+# in terminal, start an R environment
+Rscript comoexplore.Rproj
+    
+# in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
+setwd(".")
+devtools::load_all()
+
+## if you are using an interactive R session (e.g. RStudio):
+shiny::runApp(appDir = "R")
+## otherwise, set `launch.browser=FALSE` if you are using a non-interactive R session and manually launch the browser in the next step:
+shiny::runApp(appDir = "R", launch.browser=FALSE)
+```
+
+Either way, a local URL will appear on your R console, e.g.:
 ```
 Listening on http://127.0.0.1:5554
-  ```
+```
 
-`R/app.R` will be automatically run  and pop out a web interface. If not, you can manually copy-and-paste the above URL to any web server. 
+`R/app.R` will be automatically run and pop out a web interface. If not, you can manually copy-and-paste the above URL to any web server. 
 
 You can now play around with the parameters on the web interface.
+

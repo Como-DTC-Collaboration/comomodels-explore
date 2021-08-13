@@ -8,7 +8,6 @@ library(tidyverse) # tidyselect >1.1.1
 library(deSolve)
 library(ggplot2)
 library(reshape2)
-# library(plyr)
 library(magrittr)
 
 # packages for drawing model diagram

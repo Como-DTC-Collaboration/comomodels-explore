@@ -48,18 +48,20 @@ server <- function(input, output, session) {
 
   observe({
     req(input$model_flowchart_click)
-    nodeid <- input$model_flowchart_click$id[1]
-    if(nodeid == "node6"){
-      shinyjs::toggle(id="seird.params.beta")
-    }else if(nodeid == "node7"){
-      shinyjs::toggle(id="seird.params.kappa")
-    }
-    else if(nodeid == "node8"){
-      shinyjs::toggle(id="seird.params.mu")
-    }
-    else if(nodeid == "node9"){
-      shinyjs::toggle(id="seird.params.gamma")
-    }
+    nodeid <- input$model_flowchart_click$id[[1]]
+	nodeid.int <- strsplit(nodeid, "node")[[1]][2] %>% as.integer()
+	nodeval <- input$model_flowchart_click$nodeValues
+	desc <- c("Susceptible", "Exposed", "Infected", "Recovered (Removed)", "Mortality",
+	          "the rate at which an infected individual exposes susceptible", 
+			  "the rate of progression from exposed to infectious (reciprocal of the incubation period)",
+			  "the rate of disease-caused mortality of the infected",
+			  "the rate of removal (i.e. the recovery rate of the infected)")
+	trans.params <- c("beta", "kappa", "mu", "gamma")
+	
+	output$SEIRD.param.desc <- renderText({paste0(nodeval[[length(nodeval)]], ": ", desc[nodeid.int])})
+	if(nodeid.int %in% seq(6, 9)){
+	  shinyjs::toggle(id=paste0("seird.params.", trans.params[nodeid.int - 5]))
+	}
   })
  
   # ODE system
@@ -109,32 +111,46 @@ server <- function(input, output, session) {
     # 2. set up parameters and initial population
     transmission_parameters(model) <- list(beta = beta, kappa = kappa, gamma = gamma, mu = mu)
     initial_conditions(model) <- list(S0=S, E0=E, I0=I, R0=R)
-    
+    # 3. run simulation
     return(model)
   })
   
   # ODE simulation and plot
-  output$SEIRD <- renderPlotly({
+  model0.output <- reactive({
     input$goButton
     model <- model0()
     # 4. ode simulation (period: 2000 time points, most of the time will relax)
     t <- seq(0, 2000, by = 1)
     output <- run(model, t)
-    # 5. plot
-    # plot only output$states, not output$changes
+	return(output)
+	})
+
+  # 5.1 plot states
+  output$SEIRD.states <- renderPlotly({
+    output <- model0.output()
     model.plot <- plot_dataframe(output$states, x = "time", y = "value", c = "compartment") +
-                  scale_color_brewer(palette = "Set2")
+                  scale_color_brewer(palette = "Set2") # +
     #  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
     ggplotly(p=model.plot)#, dynamicTicks = TRUE, originalData = FALSE)
     model.plot
   })
-  outputOptions(output, "SEIRD", suspendWhenHidden = FALSE)
+  outputOptions(output, "SEIRD.states", suspendWhenHidden = FALSE)
+
+  # 5.2 plot changes
+  output$SEIRD.changes <- renderPlotly({
+    output <- model0.output()
+    model.plot <- plot_dataframe(output$changes, x = "time", y = "value", c = "compartment") +
+                  scale_color_brewer(palette = "Set2")
+    ggplotly(p=model.plot)
+    model.plot
+  })
+  outputOptions(output, "SEIRD.changes", suspendWhenHidden = FALSE)
   
   # R0 calculation
   output$R0 <- renderText({
     # input$goButton
     model <- model0()
-    # 3. calculate R0
+    # calculate R0
     paste0("R0 = ", R0(model))
   })
   
@@ -187,24 +203,28 @@ server <- function(input, output, session) {
 
       }")
   )
-  
+
   observe({
     req(input$sc_model_flowchart_click)
     nodeid <- input$sc_model_flowchart_click$id[1]
-    if(nodeid == "node8"){
-      shinyjs::toggle(id="sc.params.beta")
-    }else if(nodeid == "node9"){
-      shinyjs::toggle(id="sc.params.kappa")
-    }else if(nodeid == "node10"){
-      shinyjs::toggle(id="sc.params.p_symptom")
-    }else if(nodeid == "node11"){
-      shinyjs::toggle(id="sc.params.mu")
-    }else if(nodeid == "node12"){
-      shinyjs::toggle(id="sc.params.gamma")
-    }else if(nodeid == "node13"){
-      shinyjs::toggle(id="sc.params.omega")
-    }
+	nodeid.int <- strsplit(nodeid, "node")[[1]][2] %>% as.integer()
+	nodeval <- input$sc_model_flowchart_click$nodeValues
+	desc <- c("Susceptible", "Exposed", "Infected (asymptomatic)", "Infected (mild)", "Infected (severe)", 
+	          "Recovered (Removed)", "Mortality",
+	          "the rate at which an infected individual exposes susceptible", # beta
+			  "the rate of progression from exposed to infectious (reciprocal of the incubation period)", # kappa
+			  "the fraction of different infected groups", # eta
+			  "the rate of disease-caused mortality of the infected", # mu
+			  "the rate of removal (i.e. the recovery rate of the infected)", # kappa
+			  "the rate at which recovered individuals become susceptible (i.e. the loss of immunity)")
+	trans.params <- c("beta", "kappa", "p_symptom", "mu", "gamma", "omega")
+	# for Ia, Im, Is, the correct (entire) nodeval is the second item of the list
+	output$SEIaImIsRD.param.desc <- renderText({paste0(nodeval[[length(nodeval)]], ": ", desc[nodeid.int])})
+	if(nodeid.int %in% seq(8, 13)){
+	  shinyjs::toggle(id=paste0("sc.params.", trans.params[nodeid.int - 7]))
+	}
   })
+
   
   # ODE system
   output$sc.dS <- renderUI({
@@ -263,26 +283,42 @@ server <- function(input, output, session) {
     
     return(model)
   })
-  
+
+
   # ODE simulation and plot
-  output$SEIaImIsRD <- renderPlotly({
+  model0.sc.output <- reactive({
     model <- model0.sc()
     # 4. ode simulation (period: 2000 time points, most of the time will relax)
     t <- seq(0, 2000, by = 1)
     model <- run(model, t)
-    # 5. plot
-    model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment") +
-                  scale_color_brewer(palette = "Set2")
+	return(model@output)
+  })
+
+  # 5.1 plot states
+  output$SEIaImIsRD.states <- renderPlotly({
+    output <- model0.sc.output()
+    model.plot <- plot_dataframe(output$states, x = "time", y = "value", c = "compartment") +
+                  scale_color_brewer(palette = "Set2") # +
     #  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
-    model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
+    ggplotly(p=model.plot)#, dynamicTicks = TRUE, originalData = FALSE)
     model.plot
   })
-  outputOptions(output, "SEIaImIsRD", suspendWhenHidden = FALSE)
+  outputOptions(output, "SEIaImIsRD.states", suspendWhenHidden = FALSE)
+
+  # 5.2 plot changes
+  output$SEIaImIsRD.changes <- renderPlotly({
+    output <- model0.sc.output()
+    model.plot <- plot_dataframe(output$changes, x = "time", y = "value", c = "compartment") +
+                  scale_color_brewer(palette = "Set2")
+    ggplotly(p=model.plot)
+    model.plot
+  })
+  outputOptions(output, "SEIaImIsRD.changes", suspendWhenHidden = FALSE)
   
   # R0 calculation
   output$sc.R0 <- renderText({
     model <- model0.sc()
-    # 3. calculate R0
+    # calculate R0
     model <- R0(model)
     paste0("R0 = ", model@R0)
   })
@@ -372,18 +408,20 @@ server <- function(input, output, session) {
   
   observe({
     req(input$age_model_flowchart_click)
-    nodeid <- input$age_model_flowchart_click$id[1]
-    if(nodeid == "node6"){
-      shinyjs::toggle(id="age.params.beta")
-    }else if(nodeid == "node7"){
-      shinyjs::toggle(id="age.params.kappa")
-    }
-    else if(nodeid == "node8"){
-      shinyjs::toggle(id="age.params.mu")
-    }
-    else if(nodeid == "node9"){
-      shinyjs::toggle(id="age.params.gamma")
-    }
+    nodeid <- input$age_model_flowchart_click$id[[1]]
+	nodeid.int <- strsplit(nodeid, "node")[[1]][2] %>% as.integer()
+	nodeval <- input$age_model_flowchart_click$nodeValues
+	desc <- c("Susceptible", "Exposed", "Infected", "Recovered (Removed)", "Mortality",
+	          "the rate at which an infected individual exposes susceptible", 
+			  "the rate of progression from exposed to infectious (reciprocal of the incubation period)",
+			  "the rate of disease-caused mortality of the infected",
+			  "the rate of removal (i.e. the recovery rate of the infected)")
+	trans.params <- c("beta", "kappa", "mu", "gamma")
+	
+	output$SEIRDAge.param.desc <- renderText({paste0(nodeval[[length(nodeval)]], ": ", desc[nodeid.int])})
+	if(nodeid.int %in% seq(6, 9)){
+	  shinyjs::toggle(id=paste0("age.params.", trans.params[nodeid.int - 5]))
+	}
   })
 
   
@@ -509,22 +547,41 @@ server <- function(input, output, session) {
     else{
       model <- model0.age()
       t <- seq(0, 200, by = 1)
-      res <- run(model, time=t) %>%
-        filter(compartment!="Incidence")
-      return (res)
+      output <- run(model, times=t)
+      return (output)
     }
   })
-  
-  ## plot by compartment
-  output$SEIRDAge.by.compartment <- renderPlotly({
+
+  ## plot by compartment (states)
+  output$SEIRDAge.states.by.compartment <- renderPlotly({
     if(is.null(input$age.contact.files))
       return ()
     else{
-      res <- age.model.simulation()
+      output <- age.model.simulation()
+	  output <- output$states
       # set up color palette - more than 8 groups, need to be set manually
-      n.cols <- length(unique(res$age_range))
+      n.cols <- length(unique(output$age_range))
       colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n.cols)
-      model.plot <- ggplot(res, aes(x=time, y=value, colour=age_range)) +
+      model.plot <- ggplot(output, aes(x=time, y=value, colour=age_range)) +
+        geom_line() +
+        facet_grid(vars(compartment), space = "free", scales = "free") +
+        scale_color_manual(values = colors) +
+        theme_classic()
+      model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
+      return (model.plot)
+    }
+  })
+  ## plot by compartment (changes)
+  output$SEIRDAge.changes.by.compartment <- renderPlotly({
+    if(is.null(input$age.contact.files))
+      return ()
+    else{
+      output <- age.model.simulation()
+	  output <- output$changes
+      # set up color palette - more than 8 groups, need to be set manually
+      n.cols <- length(unique(output$age_range))
+      colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n.cols)
+      model.plot <- ggplot(output, aes(x=time, y=value, colour=age_range)) +
         geom_line() +
         facet_grid(vars(compartment), space = "free", scales = "free") +
         scale_color_manual(values = colors) +
@@ -534,14 +591,15 @@ server <- function(input, output, session) {
     }
   })
   
-  ## plot by age groups
-  output$SEIRDAge.by.age <- renderPlotly({
+  ## plot by age groups (states)
+  output$SEIRDAge.states.by.age <- renderPlotly({
     if(is.null(input$age.contact.files))
       return ()
     else{
-      res <- age.model.simulation()
-      res <- subset(res, age_range == input$age_range.select)
-      model.plot <- ggplot(res, aes(x=time, y=value)) +
+      output <- age.model.simulation() 
+	  output <- output$states
+      output <- subset(output, age_range == input$age_range.select)
+      model.plot <- ggplot(output, aes(x=time, y=value)) +
         geom_line(aes(colour=compartment)) +
         scale_color_brewer(palette = "Set2") +
         theme_classic()
@@ -549,6 +607,25 @@ server <- function(input, output, session) {
       return(model.plot)
     }
   })
+
+  ## plot by age groups (states)
+  output$SEIRDAge.changes.by.age <- renderPlotly({
+    if(is.null(input$age.contact.files))
+      return ()
+    else{
+      output <- age.model.simulation() 
+	  output <- output$changes
+	  # output <- output %>% filter(compartment=="Incidence")
+      output <- subset(output, age_range == input$age_range.select)
+      model.plot <- ggplot(output, aes(x=time, y=value)) +
+        geom_line(aes(colour=compartment)) +
+        scale_color_brewer(palette = "Set2") +
+        theme_classic()
+      model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
+      return(model.plot)
+    }
+  })
+
 }
 
 # beta [label='\u1d66'] 

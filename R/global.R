@@ -379,7 +379,8 @@ setMethod("R0", "SEIRD", function(model) {
 #' @slot R0 basic reproduction number (double).
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
-#' @slot output dataframe of output in long format
+#' @slot output a list of two dataframes of the model simulation result (1. Cumulative population sizes of 
+#'       compartments S, E, I.., R, D; 2. Daily Incidence and deaths).
 #'
 #' @import deSolve
 #' @import ggplot2
@@ -388,27 +389,28 @@ setMethod("R0", "SEIRD", function(model) {
 #' @concept objects
 #' @export SEIaImIsRD
 SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
-                       slots = c(
-                           initial_condition_names = "list",
-                           transmission_parameter_names = "list",
-                           initial_conditions = "list",
-                           transmission_parameters = "list",
-                           R0 = "numeric",
-                           output_names = "list",
-                           output = "list"
-                       ),
-                       prototype = list(
-                           initial_condition_names = list("S0", "E0", "I_asymptomatic0",
-                                                          "I_mild0", "I_severe0", "R0", "D0"),
-                           transmission_parameter_names = list("beta", "kappa", "omega",
-                                                               "p_symptom", "gamma", "mu"),
-                           initial_conditions = vector(mode = "list", length = 7),
-                           transmission_parameters = vector(mode = "list", length = 6),
-                           R0 = NA_real_,
-                           output_names = list("S", "E", "I_asymptomatic",
-                                               "I_mild", "I_severe", "R", "D"),
-                           output = data.frame()
-                       ))
+         slots = c(
+           initial_condition_names = "list",
+           transmission_parameter_names = "list",
+           initial_conditions = "list",
+           transmission_parameters = "list",
+           R0 = "numeric",
+           output_names = "list",
+           output = "list"
+         ),
+         prototype = list(
+           initial_condition_names = list("S0", "E0", "I_asymptomatic0",
+                                          "I_mild0", "I_severe0", "R0", "D0"),
+           transmission_parameter_names = list("beta", "kappa", "omega",
+                                              "p_symptom", "gamma", "mu"),
+           initial_conditions = vector(mode = "list", length = 7),
+           transmission_parameters = vector(mode = "list", length = 6),
+           R0 = NA_real_,
+           output_names = list("S", "E", "I_asymptomatic",
+                               "I_mild", "I_severe", "R", "D",
+                               "Incidence", "Deaths"),
+           output = list("states" = data.frame(), "changes" = data.frame())
+         ))
 
 
 
@@ -455,41 +457,39 @@ setMethod("transmission_parameters", "SEIaImIsRD",
 #' @export
 #'
 setMethod(
-    "initial_conditions<-",
-    "SEIaImIsRD",
-    function(object,
-             value = list(S = NA_real_, E = NA_real_,
-                          I_asymptomatic = NA_real_, I_mild = NA_real_, I_severe = NA_real_,
-                          R = NA_real_,
-                          D = NA_real_)) {
-        init_pop_list <- value
-        names(init_pop_list) <- object@initial_condition_names
-        object@initial_conditions <- init_pop_list
-        # check if values are valid
-        errors <- character()
-        # check whether all required initial population groups are set
-        is_na_pop <- is.na(init_pop_list)
-        if (sum(is_na_pop) != 0) {
-            msg <- paste("Missing initial setting for population group:",
-                         paste(names(init_pop_list)[is_na_pop], collapse = ", ")
-            )
-            errors <- c(errors, msg)
-        }else{
-            # check whether the sum of initial population is normalized to 1
-            sum_init_pop <- sum(unlist(init_pop_list))
-            if (sum_init_pop != 1) {
-                msg <- "Sum of initial population is not 1, please normalize"
-                errors <- c(errors, msg)
-            }
-        }
-        if (length(errors) == 0) {
-            object@initial_conditions <- init_pop_list
-            object
-        }
-        else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
-    })
-
-
+  "initial_conditions<-",
+  "SEIaImIsRD",
+  function(object,
+           value = list(S = NA_real_, E = NA_real_,
+           I_asymptomatic = NA_real_, I_mild = NA_real_, I_severe = NA_real_,
+           R = NA_real_,
+           D = NA_real_)) {
+    init_pop_list <- value
+    names(init_pop_list) <- object@initial_condition_names
+    object@initial_conditions <- init_pop_list
+    # check if values are valid
+    errors <- character()
+    # check whether all required initial population groups are set
+    is_na_pop <- is.na(init_pop_list)
+    if (sum(is_na_pop) != 0) {
+      msg <- paste("Missing initial setting for population group:",
+                   paste(names(init_pop_list)[is_na_pop], collapse = ", ")
+      )
+      errors <- c(errors, msg)
+    }else{
+      # check whether the sum of initial population is normalized to 1
+      sum_init_pop <- sum(unlist(init_pop_list))
+      if (sum_init_pop != 1) {
+        msg <- "Sum of initial population is not 1, please normalize"
+        errors <- c(errors, msg)
+      }
+    }
+    if (length(errors) == 0) {
+      object@initial_conditions <- init_pop_list
+      object
+      }
+    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+  })
 
 
 #' @describeIn SEIaImIsRD Setter method for transmission parameters
@@ -508,49 +508,49 @@ setMethod(
 #' @export
 #'
 setMethod(
-    "transmission_parameters<-",
-    "SEIaImIsRD",
-    function(
-        object,
-        value = list(beta = list(), kappa = NA_real_, omega = NA_real_,
-                     p_symptom = list(), gamma = list(), mu = list())) {
-        param_list <- value
-        names(param_list) <- object@transmission_parameter_names
-        object@transmission_parameters <- param_list
-        # check if values are valid
-        errors <- character()
-        # check whether all required parameters are set
-        is_na_params <- is.na(param_list)
-        if (sum(is_na_params) != 0) {
-            msg <- paste("Missing parameters:",
-                         paste(names(param_list)[is_na_params], collapse = ", ")
-            )
-            errors <- c(errors, msg)
-        }
-        # check whether the lengths of beta, gamma and mu correspond to the number of infected groups
-        n_beta <- length(param_list$beta)
-        if (n_beta != 3) {
-            msg <- paste0(
-                "Length of parameter beta,", n_beta, ", is not equal to the setting ", 3)
-            errors <- c(errors, msg)
-        }
-        n_gamma <- length(param_list$gamma)
-        if (n_gamma != 3) {
-            msg <- paste0(
-                "Length of parameter gamma,", n_gamma, ", is not equal to the setting ", 3)
-            errors <- c(errors, msg)
-        }
-        n_mu <- length(param_list$mu)
-        if (n_mu != 3) {
-            msg <- paste0(
-                "Length of parameter mu,", n_mu, ", is not equal to the setting ", 3)
-            errors <- c(errors, msg)
-        }
-        if (length(errors) == 0) {
-            object@transmission_parameters <- param_list
-            object
-        }
-        else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+  "transmission_parameters<-",
+  "SEIaImIsRD",
+  function(
+    object,
+    value = list(beta = list(), kappa = NA_real_, omega = NA_real_,
+    p_symptom = list(), gamma = list(), mu = list())) {
+    param_list <- value
+    names(param_list) <- object@transmission_parameter_names
+    object@transmission_parameters <- param_list
+    # check if values are valid
+    errors <- character()
+    # check whether all required parameters are set
+    is_na_params <- is.na(param_list)
+    if (sum(is_na_params) != 0) {
+      msg <- paste("Missing parameters:",
+                   paste(names(param_list)[is_na_params], collapse = ", ")
+      )
+      errors <- c(errors, msg)
+    }
+    # check whether the lengths of beta, gamma and mu correspond to the number of infected groups
+    n_beta <- length(param_list$beta)
+    if (n_beta != 3) {
+      msg <- paste0(
+        "Length of parameter beta,", n_beta, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    n_gamma <- length(param_list$gamma)
+    if (n_gamma != 3) {
+      msg <- paste0(
+        "Length of parameter gamma,", n_gamma, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    n_mu <- length(param_list$mu)
+    if (n_mu != 3) {
+      msg <- paste0(
+        "Length of parameter mu,", n_mu, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    if (length(errors) == 0) {
+      object@transmission_parameters <- param_list
+      object
+      }
+    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
     })
 
 #' Solves the ode system.
@@ -574,55 +574,79 @@ setMethod(
 setMethod("run",
           "SEIaImIsRD",
           def = function(
-              object,
-              times,
-              solve_method = "lsoda") {
-              # initial population groups
-              pop_groups <- c(S = object@initial_conditions$S,
-                              E = object@initial_conditions$E,
-                              I_asymptomatic = object@initial_conditions$I_asymptomatic,
-                              I_mild = object@initial_conditions$I_mild,
-                              I_severe = object@initial_conditions$I_severe,
-                              R = object@initial_conditions$R,
-                              D = object@initial_conditions$D)
-              # parameters
-              params <- c(beta = object@transmission_parameters$beta,
-                          kappa = object@transmission_parameters$kappa,
-                          omega = object@transmission_parameters$omega,
-                          p_symptom = object@transmission_parameters$p_symptom,
-                          gamma = object@transmission_parameters$gamma,
-                          mu = object@transmission_parameters$mu)
-              
-              # ODE system RHS
-              ode_symptome_rhs <- function(t, pop_groups, parameters) {
-                  with(
-                      as.list(c(pop_groups, params)), {
-                          dS <- -S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) + omega * R
-                          dE <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) - kappa * E
-                          dI_a <- (1.0 - p_symptom.i_mild - p_symptom.i_severe) * kappa * E - (gamma.i_asymptomatic + mu.i_asymptomatic) * I_asymptomatic
-                          dI_m <- p_symptom.i_mild * kappa * E - (gamma.i_mild + mu.i_mild) * I_mild
-                          dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
-                          dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
-                          dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
-                          # return the rate of cI_severenge
-                          list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD))
-                      })
-              }
-              # solving ode
-              output <- ode(y = pop_groups,
-                            times = times,
-                            func = ode_symptome_rhs,
-                            parms = params,
-                            method = solve_method)
-              output <- as.data.frame(output)
-              # reshape data frame into long format
-              output.melt <- melt(output, id.vars = "time")
-              # names(output.melt) <- c("time", "population_group", "fraction")
-              names(output.melt) <- c("time", "compartment", "value")
-              object@output <- output.melt
-              return(object)
-          })
+            object,
+            times,
+            solve_method = "lsoda") {
+            # initial population groups
+            pop_groups <- c(S = object@initial_conditions$S,
+                            E = object@initial_conditions$E,
+                            I_asymptomatic = object@initial_conditions$I_asymptomatic,
+                            I_mild = object@initial_conditions$I_mild,
+                            I_severe = object@initial_conditions$I_severe,
+                            R = object@initial_conditions$R,
+                            D = object@initial_conditions$D,
+                            C = 0)
+            # parameters
+            params <- c(beta = object@transmission_parameters$beta,
+                        kappa = object@transmission_parameters$kappa,
+                        omega = object@transmission_parameters$omega,
+                        p_symptom = object@transmission_parameters$p_symptom,
+                        gamma = object@transmission_parameters$gamma,
+                        mu = object@transmission_parameters$mu)
 
+            # ODE system RHS
+            ode_symptome_rhs <- function(t, pop_groups, parameters) {
+              with(
+                as.list(c(pop_groups, params)), {
+                  dS <- -S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) + omega * R
+                  dE <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) - kappa * E
+                  dI_a <- (1.0 - p_symptom.i_mild - p_symptom.i_severe) * kappa * E - (gamma.i_asymptomatic + mu.i_asymptomatic) * I_asymptomatic
+                  dI_m <- p_symptom.i_mild * kappa * E - (gamma.i_mild + mu.i_mild) * I_mild
+                  dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
+                  dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
+                  dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
+                  dC <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe)
+                  # return the rate of cI_severenge
+                  list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD, dC))
+                })
+            }
+            # solving ode
+            output <- ode(y = pop_groups,
+                          times = times,
+                          func = ode_symptome_rhs,
+                          parms = params,
+                          method = solve_method)
+            output <- as.data.frame(output)
+            
+            
+            # Compute incidences and deaths
+            cases <- c(0, diff(output$C))
+            deaths <- c(0, diff(output$D))
+            output$Incidence <- cases
+            output$Deaths <- deaths
+            output <- output[, c("time", unlist(object@output_names))]
+            
+            # Create long format of output
+            output <- melt(output, id.vars = "time")
+            output <- output[, c("time", "value", "variable")]
+            names(output) <- c("time", "value", "compartment")
+
+            # Added for consistency of output format across models
+            output$age_range <- rep("0-150", length(output$time))
+
+            # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+            states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
+            states <- droplevels(states)
+            changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
+            changes <- droplevels(changes)
+            # reshape data frame into long format
+            # output <- melt(output, id.vars = "time")
+            # names(output) <- c("time", "population_group", "fraction")
+            # names(output) <- c("time", "compartment", "value")
+            object@output <- list("states" = states, "changes" = changes)
+            return(object)
+          })
+ 
 
 #' Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
 #' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf} mathematical
@@ -642,37 +666,37 @@ setMethod("run",
 #' @export
 #'
 setMethod("R0", "SEIaImIsRD", function(model) {
-    # get required parameters:
-    S <- model@initial_conditions$S
-    beta <- model@transmission_parameters$beta
-    kappa <- model@transmission_parameters$kappa
-    p_symptom <- model@transmission_parameters$p_symptom
-    gamma <- model@transmission_parameters$gamma
-    mu <- model@transmission_parameters$mu
-    # define matrices F and V:
-    F <- matrix(0, 4, 4)
-    V <- matrix(0, 4, 4)
-    F[1, 2:4] <-  c(S * beta$i_asymptomatic, S * beta$i_mild, S * beta$i_severe)
-    V[1, 1] <- kappa
-    V[2, 1] <- -kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
-    V[2, 2] <- gamma$i_asymptomatic + mu$i_asymptomatic
-    V[3, 1] <- -kappa * p_symptom$i_mild
-    V[3, 3] <- gamma$i_mild + mu$i_mild
-    V[4, 1] <- -kappa * p_symptom$i_severe
-    V[4, 4] <- gamma$i_severe + mu$i_severe
-    # calculate R0 as the spectral radius for the matrix F x V^(-1):
-    eigVals <- eigen(F %*% (solve(V)))$values
-    model@R0 <- max(abs(eigVals))
-    return(model)
-})
-
-
+  # get required parameters:
+  S <- model@initial_conditions$S
+  beta <- model@transmission_parameters$beta
+  kappa <- model@transmission_parameters$kappa
+  p_symptom <- model@transmission_parameters$p_symptom
+  gamma <- model@transmission_parameters$gamma
+  mu <- model@transmission_parameters$mu
+  # define matrices F and V:
+  F <- matrix(0, 4, 4)
+  V <- matrix(0, 4, 4)
+  F[1, 2:4] <-  c(S * beta$i_asymptomatic, S * beta$i_mild, S * beta$i_severe)
+  V[1, 1] <- kappa
+  V[2, 1] <- -kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
+  V[2, 2] <- gamma$i_asymptomatic + mu$i_asymptomatic
+  V[3, 1] <- -kappa * p_symptom$i_mild
+  V[3, 3] <- gamma$i_mild + mu$i_mild
+  V[4, 1] <- -kappa * p_symptom$i_severe
+  V[4, 4] <- gamma$i_severe + mu$i_severe
+  # calculate R0 as the spectral radius for the matrix F x V^(-1):
+  eigVals <- eigen(F %*% (solve(V)))$values
+  model@R0 <- max(abs(eigVals))
+  return(model)
+  })
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # SEIRDAges
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#' Defines an age-structured SEIR model and solves the set of
+#' An S4 object representing the SEIRDAge.
+#' 
+#' Defines an age-structured SEIRD model and solves the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'
@@ -683,7 +707,7 @@ setMethod("R0", "SEIaImIsRD", function(model) {
 #' @slot transmission_parameter_names names of the transmission parameters used
 #'     by the model.
 #' @slot initial_conditions named list containing the initial conditions of the
-#'     model. Initial values for each compartment, S0, E0, I0, R0.
+#'     model. Initial values for each compartment, S0, E0, I0, R0, D0.
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
@@ -705,50 +729,50 @@ setMethod("R0", "SEIaImIsRD", function(model) {
 #' @export SEIRDAge
 #' 
 SEIRDAge <- setClass('SEIRDAge',
-                     # slots
-                     slots = c(
-                         output_names = 'list',
-                         initial_condition_names = 'list',
-                         transmission_parameter_names = 'list',
-                         initial_conditions = 'list',
-                         transmission_parameters = 'list',
-                         age_ranges = 'list',
-                         n_age_categories = 'numeric',
-                         contact_matrix = 'matrix'
-                     ),
-                     
-                     # prototypes for the slots, automatically set output and param
-                     # names
-                     prototype = list(
-                         output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
-                         initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
-                         transmission_parameter_names = list('b', 'k', 'g', 'mu'),
-                         initial_conditions = vector(mode = "list", length = 5),
-                         transmission_parameters = vector(mode = "list", length = 4),
-                         age_ranges = vector(mode = 'list'),
-                         n_age_categories = NA_real_,
-                         contact_matrix = matrix(NA)
-                         
-                     )
+         # slots
+         slots = c(
+           output_names = 'list',
+           initial_condition_names = 'list',
+           transmission_parameter_names = 'list',
+           initial_conditions = 'list',
+           transmission_parameters = 'list',
+           age_ranges = 'list',
+           n_age_categories = 'numeric',
+           contact_matrix = 'matrix'
+         ),
+
+         # prototypes for the slots, automatically set output and param
+         # names
+         prototype = list(
+           output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
+           initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
+           transmission_parameter_names = list('b', 'k', 'g', 'mu'),
+           initial_conditions = vector(mode = "list", length = 5),
+           transmission_parameters = vector(mode = "list", length = 4),
+           age_ranges = vector(mode = 'list'),
+           n_age_categories = NA_real_,
+           contact_matrix = matrix(NA)
+
+         )
 )
 
 # Setter and getter methods for initial_conditions of an age-structured
-# SEIR model.
+# SEIRD model.
 
-#' Retrieves initial_conditions for an
-#' age-structured SEIR model.
+#' @describeIn SEIRDAge Retrieves initial_conditions for an
+#' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
 #' @return Initial conditions of SEIRDAge model.
-#' @aliases initial_conditions,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases initial_conditions,ANY,ANY-method
+#' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
-#' Sets initial_conditions of an age-structured
-#' SEIR model.
+#' @describeIn SEIRDAge Sets initial_conditions of an age-structured
+#' SEIRD model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
@@ -758,64 +782,65 @@ setMethod('initial_conditions', 'SEIRDAge',
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
 #'
-#' @return Updated version of the age-structured SEIR model.
-#' @aliases initial_conditions<-,ANY,ANY-method
-#' @rdname SEIRDAge-class
+#' @return Updated version of the age-structured SEIRD model.
 #' @export
+#' @aliases initial_conditions<-,ANY,ANY-method
+#' 
 setMethod(
-    'initial_conditions<-', 'SEIRDAge',
-    function(object, value) {
-        S0 = value$S0
-        E0 = value$E0
-        I0 = value$I0
-        R0 = value$R0
-        D0 = value$D0
-        # check that ICs are valid
-        if (sum(S0, E0, I0, R0, D0) != 1) {
-            stop('Invalid initial conditions. Must sum to 1.')
-        }
-        
-        # create list of parameter values
-        ic <- list(S0, E0, I0, R0, D0)
-        
-        # add names to each value
-        names(ic) = object@initial_condition_names
-        
-        # raise errors if age category dimensions do not match initial state vectors
-        # also raise errors if initial state and parameter values are not doubles
-        for (p in list('S0', 'E0', 'I0', 'R0', 'D0')){
-            if(length(ic[[p]]) != object@n_age_categories){
-                stop(glue('Wrong number of age groups for {p}
+  'initial_conditions<-', 'SEIRDAge',
+  function(object, value) {
+    S0 = value$S0
+    E0 = value$E0
+    I0 = value$I0
+    R0 = value$R0
+    D0 = value$D0
+    # check that ICs are valid
+    if (abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)) {
+      stop('Invalid initial conditions. Must sum to 1.')
+    }
+
+    # create list of parameter values
+    ic <- list(S0, E0, I0, R0, D0)
+
+    # add names to each value
+    names(ic) = object@initial_condition_names
+
+    # raise errors if age category dimensions do not match initial state vectors
+    # also raise errors if initial state and parameter values are not doubles
+    for (p in list('S0', 'E0', 'I0', 'R0', 'D0')){
+      if(length(ic[[p]]) != object@n_age_categories){
+        stop(glue('Wrong number of age groups for {p}
               compartments.'))}
-            if(!is.numeric(ic[[p]])){
-                stop(glue('{p} format must be numeric'))}
-        }
-        if(sum(S0, E0, I0, R0, D0) != 1){
-            stop('All compartments need to sum up to 1.')
-        }
-        
-        # if all above tests are passed, assign the ic namelist to the object
-        object@initial_conditions <- ic
-        
-        return(object)
-    })
+      if(!is.numeric(ic[[p]])){
+        stop(glue('{p} format must be numeric'))}
+    }
+    if(abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)){
+      stop('All compartments need to sum up to 1.')
+    }
+
+    # if all above tests are passed, assign the ic namelist to the object
+    object@initial_conditions <- ic
+
+    return(object)
+  })
 
 # Setter and getter methods for transmission_parameters of an age-structured
-# SEIR model.
+# SEIRD model.
 
-#' Retrieves transmission_parameters for an
-#' age-structured SEIR model.
+#' @describeIn SEIRDAge Retrieves transmission_parameters for an
+#' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
 #' @return Transmission parameters of SEIRDAge model.
-#' @aliases transmission_parameters,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases transmission_parameters,ANY,ANY-method
+#' 
 setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
-#' Sets transmission_parameters of an
-#' age-structured SEIR model.
+
+#' @describeIn SEIRDAge Sets transmission_parameters of an
+#' age-structured SEIRD model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
@@ -825,53 +850,53 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #' All rates of change between compartments are equal regardless of
 #' age group.
 #'
-#' @return Updated version of the age-structured SEIR model.
-#' @aliases transmission_parameters<-,ANY,ANY-method
-#' @rdname SEIRDAge-class
+#' @return Updated version of the age-structured SEIRD model.
 #' @export
-setMethod(
-    'transmission_parameters<-', 'SEIRDAge',
-    function(object, value) {
-        
-        # create list of parameter values
-        b <- value$b
-        k <- value$k
-        g <- value$g
-        mu <- value$mu
-        
-        trans_params <- list(b, k, g, mu)
-        
-        # add names to each value
-        names(trans_params) = object@transmission_parameter_names
-        
-        # check format of parameters b, k and g
-        if(length(b) != 1 | length(k) != 1 | length(g) != 1){
-            stop('The parameter values should be 1-dimensional.')
-        }
-        
-        # Set the row and column names of the instance's contact matrix
-        rownames(object@contact_matrix) <- object@age_ranges
-        colnames(object@contact_matrix) <- object@age_ranges
-        
-        # if all above tests are passed, assign the trans_params namelist to the
-        # object
-        object@transmission_parameters <- trans_params
-        
-        return(object)
-    })
-
-#' Method to simulate output using from model.
+#' @aliases transmission_parameters<-,ANY,ANY-method
 #' 
-#' Solves a system to ODEs which form an
-#' age-structured simple SEIR model. The system of equations for the time
+setMethod(
+  'transmission_parameters<-', 'SEIRDAge',
+  function(object, value) {
+
+    # create list of parameter values
+    b <- value$b
+    k <- value$k
+    g <- value$g
+    mu <- value$mu
+    
+    trans_params <- list(b, k, g, mu)
+
+    # add names to each value
+    names(trans_params) = object@transmission_parameter_names
+
+    # check format of parameters b, k and g
+    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
+      stop('The parameter values should be 1-dimensional.')
+    }
+    
+    # Set the row and column names of the instance's contact matrix
+    rownames(object@contact_matrix) <- object@age_ranges
+    colnames(object@contact_matrix) <- object@age_ranges
+
+    # if all above tests are passed, assign the trans_params namelist to the
+    # object
+    object@transmission_parameters <- trans_params
+
+    return(object)
+  })
+
+#' @describeIn SEIRDAge Method to simulate output using from model.
+#' 
+#' Solves a system of ODEs which form an
+#' age-structured SEIRD model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) \Sigma_{j}C_{ij} I_j(t)}
-#' \deqn{\frac{dE_i(t)}{dt} = b S_i(t) \Sigma_{j}C_{ij} I_j(t)} - k E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
-#' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
+#' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)} - \kappa E_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t)} - \mu I_i(t)}
+#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 
 #' where C is a contact matrix whose elements represents the
@@ -891,113 +916,119 @@ setMethod(
 #' @return data frame containing the time vector and time series of S, R, I and
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
-#' @rdname SEIRDAge-class
+#' 
+#' 
 #' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
-#' @export
 setMethod(
-    "run", 'SEIRDAge',
-    function(object, times, solve_method = 'lsoda') {
-        
-        # error if times is not a vector or list of doubles
-        if(!is.double(times)){
-            stop('Evaluation times of the model storage format must be a vector.')
-        }
-        
-        #fetch number of age catagories
-        age <- object@n_age_categories
-        
-        # set initial state vector
-        state <- c(S = initial_conditions(object)$S0,
-                   E = initial_conditions(object)$E0,
-                   I = initial_conditions(object)$I0,
-                   R = initial_conditions(object)$R0,
-                   D = initial_conditions(object)$D0)
-        
-        # set parameters vector
-        parameters <- c(b = transmission_parameters(object)$b,
-                        k = transmission_parameters(object)$k,
-                        g = transmission_parameters(object)$g,
-                        mu = transmission_parameters(object)$mu)
-        
-        # fetch contact matrix of the instance
-        C = object@contact_matrix
-        
-        # function for RHS of ode system
-        right_hand_side <- function(t, state, parameters) {
-            with(
-                as.list(c(state, parameters)),
-                {
-                    S <- state[1:age]
-                    E <- state[(age + 1):(2 * age)]
-                    I <- state[(2 * age + 1):(3 * age)]
-                    R <- state[(3 * age + 1):(4 * age)]
-                    D <- state[(4 * age + 1):(5 * age)]
-                    
-                    
-                    # rate of change
-                    dS <- -b * S * C %*% I
-                    dE <- b * S * C %*% I - k * E
-                    dI <- k * E - g * I
-                    dR <- g * I
-                    dD <- mu * I
-                    # return the rate of change
-                    list(c(dS, dE, dI, dR, dD))
-                })
-        }
-        
-        # call ode solver
-        out <- ode(
-            y = state, times = times, func = right_hand_side,
-            parms = parameters, method = solve_method)
-        
-        #output as a dataframe
-        output <- as.data.frame.array(out)
-        
-        # melt dataframe to wide format
-        out_temp = melt(output, 'time')
-        
-        # add compartment and age range columns
-        out_temp$compartment = c(replicate(length(times)*age, "S"),
-                                 replicate(length(times)*age, "E"),
-                                 replicate(length(times)*age, "I"),
-                                 replicate(length(times)*age, "R"),
-                                 replicate(length(times)*age, "D"))
-        
-        out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-        
-        #drop the old variable column
-        out_temp = out_temp %>% 
-            dplyr::select(-.data$variable) %>% 
-            dplyr::mutate(compartment=as.factor(compartment)) %>% 
-            dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R","D")) %>% 
-            dplyr::mutate(age_range=as.factor(age_range)) %>% 
-            dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
-        
-        # compute incidence number
-        total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
-        n_inc <- rbind(rep(0, age),
-                       total_inf[2:nrow(total_inf),]-total_inf[1:nrow(total_inf)-1,]
-        )
-        
-        # melt the incidence dataframe to long format
-        incidence_temp = melt(n_inc, id.vars=NULL)
-        
-        # add time, compartment and age_range columns as above
-        incidence_temp$time = rep(times, age)
-        incidence_temp$compartment = rep('Incidence', age*length(times))
-        incidence_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-        
-        # drop the old variable column
-        incidence_temp = incidence_temp %>% 
-            dplyr::select(-.data$variable)
-        
-        # bind SEIR and incidence dataframes
-        output = rbind(out_temp, incidence_temp)
-        
-        return(output)
-    })
+  "run", 'SEIRDAge',
+  function(object, times, solve_method = 'lsoda') {
+
+    # error if times is not a vector or list of doubles
+    if(!is.double(times)){
+      stop('Evaluation times of the model storage format must be a vector.')
+    }
+    if(!is.numeric(times)){
+      stop('Evaluation times of the model storage format must numeric.')
+    }
+    if(!(all(diff(times) > 0))){
+      stop('Evaluation times of the model storage format must be increasing')
+    }
+    
+    #fetch number of age catagories
+    n_age <- object@n_age_categories
+
+    # set initial state vector
+    state <- c(S = initial_conditions(object)$S0,
+               E = initial_conditions(object)$E0,
+               I = initial_conditions(object)$I0,
+               R = initial_conditions(object)$R0,
+               D = initial_conditions(object)$D0,
+               cc = rep(0, n_age))
+
+    # set parameters vector
+    parameters <- c(b = transmission_parameters(object)$b,
+                    k = transmission_parameters(object)$k,
+                    g = transmission_parameters(object)$g,
+                    mu = transmission_parameters(object)$mu)
+    
+    # fetch contact matrix of the instance
+    C = object@contact_matrix
+
+    # function for RHS of ode system
+    right_hand_side <- function(t, state, parameters) {
+      with(
+        as.list(c(state, parameters)),
+        {
+          S <- state[1:n_age]
+          E <- state[(n_age + 1):(2 * n_age)]
+          I <- state[(2 * n_age + 1):(3 * n_age)]
+          R <- state[(3 * n_age + 1):(4 * n_age)]
+          D <- state[(4 * n_age + 1):(5 * n_age)]
+          cc <- state[(5 * n_age + 1):(6 * n_age)]
+          
+          
+          # rate of change
+          dS <- -b * S * C %*% I
+          dE <- b * S * C %*% I - k * E
+          dI <- k * E - g * I  - mu * I
+          dR <- g * I
+          dD <- mu * I
+          dcc <- b * S * C %*% I
+          # return the rate of change
+          list(c(dS, dE, dI, dR, dD, dcc))
+        })
+    }
+
+    # call ode solver
+    out <- ode(
+      y = state, times = times, func = right_hand_side,
+      parms = parameters, method = solve_method)
+
+    #output as a dataframe
+    output <- as.data.frame.array(out)
+
+    # melt dataframe to wide format
+    out_temp = melt(output, 'time')
+
+    # add compartment and age range columns
+    n_compartment_measurements <- length(times) * n_age
+    out_temp$compartment = c(replicate(n_compartment_measurements, "S"),
+                             replicate(n_compartment_measurements, "E"),
+                             replicate(n_compartment_measurements, "I"),
+                             replicate(n_compartment_measurements, "R"),
+                             replicate(n_compartment_measurements, "D"),
+                             replicate(n_compartment_measurements, "cc"))
+
+    out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
+
+    # drop the old variable column
+    out_temp = out_temp %>% 
+      dplyr::select(-.data$variable) %>% 
+      dplyr::mutate(compartment=as.factor(compartment)) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R", "D", "cc")) %>% 
+      dplyr::mutate(age_range=as.factor(age_range)) %>% 
+      dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
+
+    # compute incidence and deaths
+    changes <- out_temp %>% 
+      dplyr::filter(compartment %in% c("cc", "D")) %>% 
+      dplyr::group_by(compartment, age_range) %>% 
+      dplyr::mutate(value = c(0, diff(value))) %>% 
+      dplyr::mutate(compartment = dplyr::if_else(compartment == "cc", "Incidence",
+                                                 "Deaths")) %>% 
+      dplyr::ungroup() %>% 
+      as.data.frame()
+    
+    # remove cumulative cases column from state vector
+    states = out_temp %>% 
+      dplyr::filter(compartment != "cc") %>% 
+      droplevels() %>% 
+      dplyr::ungroup()
+
+    return(list("states" = states, "changes" = changes))
+  })
 
 
 #' # describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)

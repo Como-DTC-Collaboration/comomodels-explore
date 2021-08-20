@@ -184,115 +184,169 @@ body = dashboardBody(
     id = "simulation",
     # SEIRD
     tabPanel(title="SEIRD", value='SEIRD_params',
-             div(class = "col-sm-12 col-md-6 col-lg-auto",
-                 box(width = "100%", 
-                     title="Model",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     # actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
-                     tabBox(width = "100%",
-                            title = "", 
-                            tabPanel(title = "SEIRD Diagram",
-                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
-                                     grVizOutput(outputId = "model_flowchart"),
-                                     ),
-                            tabPanel(title = "SEIRD ODE system",
-                                     fluidPage(uiOutput(outputId = 'dS'),
-                                               uiOutput(outputId = 'dE'),
-                                               uiOutput(outputId = 'dI'),
-                                               uiOutput(outputId = 'dR'),
-                                               uiOutput(outputId = 'dD')
-                                     )
-                            )
-                     )
-                 ),
-                 
-                 
-                 #actionButton("slider.hide.beta", "hide beta"),
-                 box(width = "100%", 
-                     title="Simulation result",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-                     plotlyOutput(outputId = "SEIRD")
-                 ),
-                 box(width = "100%", 
-                     title="R0",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     verbatimTextOutput(outputId = "R0")
-                 )
-             )
+             div(class = "col-sm-12 col-md-12 col-lg-10",
+				 fluidRow(
+					 box(width = 6, 
+						 title="Model",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+						 # actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
+						 box(width = "100%",
+							 title = "Diagram",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+							 grVizOutput(outputId = "model_flowchart"),
+							 verbatimTextOutput(outputId = "SEIRD.param.desc")
+						 ),
+						 box(width = "100%",
+							 title = "SEIRD ODE system",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 fluidPage(uiOutput(outputId = 'dS'),
+									   uiOutput(outputId = 'dE'),
+									   uiOutput(outputId = 'dI'),
+									   uiOutput(outputId = 'dR'),
+									   uiOutput(outputId = 'dD')
+							 )
+						 )
+					 ),
+					 # actionButton("slider.hide.beta", "hide beta"),
+					 box(width = 6, 
+						 title="Simulation",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+						 box(width = "100%",
+						     title = "States",
+						     collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                             plotlyOutput(outputId = "SEIRD.states")
+						 ),
+						 box(width = "100%",
+							 title = "Daily Incidence and Deaths",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 plotlyOutput(outputId = "SEIRD.changes")
+						 ),
+						 box(width = "100%",
+							 title = "Basic Reproduction Number",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 verbatimTextOutput(outputId = "R0")
+						 )
+					 )
+				 )
+			 )
     ),
     
     # SEIaImIsRD
     tabPanel(title="SEIaImIsRD", value='SEIaImIsRD_params',
-             div(class = "col-sm-12 col-md-6 col-lg-auto",
-                 box(width = "100%", 
-                     title="Model",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
-                     tabBox(width = "100%",
-                            title = "", 
-                            tabPanel(title = "SEIaImIsRD Diagram",
-                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
-                                     grVizOutput(outputId = "sc_model_flowchart")),
-                            tabPanel(title = "SEIaImIsRD ODE system",
-                                     fluidPage(uiOutput(outputId = 'sc.dS'),
-                                               uiOutput(outputId = 'sc.dE'),
-                                               uiOutput(outputId = 'sc.dI'),
-                                               uiOutput(outputId = 'sc.dR'),
-                                               uiOutput(outputId = 'sc.dD')
-                                     )
-                            )
-                     )
-                 ),
-                 box(width = "100%", 
-                     title="Simulation result",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-                     plotlyOutput(outputId = "SEIaImIsRD")
-                 ),
-                 box(width = "100%", 
-                     title="R0",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     verbatimTextOutput(outputId = "sc.R0")
-                 )
+             div(class = "col-sm-12 col-md-12 col-lg-10",
+				 fluidRow(
+					 box(width = 6, 
+						 title="Model",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+						 # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
+						 box(width = "100%",
+							 title = "Diagram",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+							 grVizOutput(outputId = "sc_model_flowchart"),
+							 verbatimTextOutput(outputId = "SEIaImIsRD.param.desc")
+						 ),
+						 box(width = "100%",
+							 title = "SEIaImIsRD ODE system",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 fluidPage(uiOutput(outputId = 'sc.dS'),
+									   uiOutput(outputId = 'sc.dE'),
+									   uiOutput(outputId = 'sc.dI'),
+									   uiOutput(outputId = 'sc.dR'),
+									   uiOutput(outputId = 'sc.dD')
+							 )
+						 )
+					 ),
+					 box(width = 6, 
+						 title="Simulation",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+						 box(width = "100%",
+						     title = "States",
+						     collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                             plotlyOutput(outputId = "SEIaImIsRD.states")
+						 ),
+						 box(width = "100%",
+							 title = "Daily Incidence and Deaths",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 plotlyOutput(outputId = "SEIaImIsRD.changes")
+						 ),
+						 box(width = "100%",
+							 title = "Basic Reproduction Number",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 verbatimTextOutput(outputId = "sc.R0")
+						 )
+					 )
+			     )
              )
     ),
     
     # SEIRDAge
     tabPanel(title="SEIRDAge", value='SEIRDAge_params',
-             div(class = "col-sm-12 col-md-6 col-lg-auto", # row-sm-12 row-md-6 row-lg-auo",
-                 box(width = "100%", 
-                     title="Files loaded ",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                     verbatimTextOutput(outputId = "age.contact.names")),
-                 box(width = "100%", 
-                     title="Model",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = TRUE,
-                     tabBox(width = "100%",
-                            title = "", 
-                            tabPanel(title = "SEIRDAge Diagram",
-                                     h5("Please click on the transmission parameters you want to modify on the diagram below:"),
-                                     grVizOutput(outputId = "age_model_flowchart")),
-                            tabPanel(title = "SEIRDAge ODE system",
-                                     fluidPage(uiOutput(outputId = 'age.dS'),
-                                               uiOutput(outputId = 'age.dE'),
-                                               uiOutput(outputId = 'age.dI'),
-                                               uiOutput(outputId = 'age.dR'),
-                                               uiOutput(outputId = 'age.dD')
-                                     )
-                            )
-                     )
-                 ),
-                 box(width = "100%", 
-                     title="Simulation result by compartment",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-                     plotlyOutput(outputId = "SEIRDAge.by.compartment")
-                 ),
-                 box(width="100%",
-                     title="Simulation result by age",
-                     collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-                     selectInput(inputId = "age_range.select", label = "Selected age range",
+             div(class = "col-sm-12 col-md-12 col-lg-10", # row-sm-12 row-md-6 row-lg-auo",
+				fluidRow(
+					 box(width = 6, 
+						 title="Model",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+						 # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
+						 box(width = "100%",
+							 title = "Diagram",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+							 grVizOutput(outputId = "age_model_flowchart"),
+							 verbatimTextOutput(outputId = "SEIRDAge.param.desc")
+						 ),
+						 box(width = "100%",
+							 title = "SEIRDAge ODE system",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 fluidPage(uiOutput(outputId = 'age.dS'),
+                                       uiOutput(outputId = 'age.dE'),
+                                       uiOutput(outputId = 'age.dI'),
+                                       uiOutput(outputId = 'age.dR'),
+                                       uiOutput(outputId = 'age.dD')
+							 )
+						 ),
+						 box(width = "100%", 
+							 title="Files loaded ",
+                             collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                             verbatimTextOutput(outputId = "age.contact.names")
+						 )
+					 ),
+					 box(width = 6, 
+						 title="Simulation",
+						 collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+						 box(width = "100%", 
+							 title="Result by compartment groups",
+                             collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+					         box(width = "100%",
+						         title = "States",
+						         collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                 plotlyOutput(outputId = "SEIRDAge.states.by.compartment")
+							 ),
+					         box(width = "100%",
+						         title = "Daily Incidence and Deaths",
+						         collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                 plotlyOutput(outputId = "SEIRDAge.changes.by.compartment")
+					         )
+                         ),
+						 box(width = "100%", 
+							 title="Result by age groups",
+                             collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+							 selectInput(inputId = "age_range.select", label = "Selected age range",
                                  choices = NULL),
-                     plotlyOutput(outputId = "SEIRDAge.by.age")
-                 )
+					         box(width = "100%",
+						         title = "States",
+						         collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                 plotlyOutput(outputId = "SEIRDAge.states.by.age")
+							 ),
+					         box(width = "100%",
+						         title = "Daily Incidence and Deaths",
+						         collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                 plotlyOutput(outputId = "SEIRDAge.changes.by.age")
+					         )
+                         )
+					 )
+			     )
              )
     )
   )

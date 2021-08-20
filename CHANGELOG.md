@@ -16,7 +16,13 @@
 ## 20210813
 * Display each param sliderInput bar only when clicking on corresponding nodes ub the "Model" diagram panel (Ben's suggestion)
 
+## 20210820
+* Add description for each population group or parameter (node) on the model diagram when clicking on.
+* Add a separate plot for Incidence and Daily deaths.
+* Aesthetics restructured (two cols in main panel)
+
 ## To do
+* Add a brief description on how to read the SEIRD diagram.
 * SEIRDAge: data missing for some countries in population.rda
 * SEIRDAge: automatically identify how many contact matrices are loaded, get object names and process accordingly
 * Deploy

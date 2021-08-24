@@ -106,7 +106,7 @@ server <- function(input, output, session) {
     I <- 0.00
     R <- 0.00
     
-    # 1. create the instance in class SEIaImIsRD
+    # 1. create the instance in class SEIRD
     model <- SEIRD()
     # 2. set up parameters and initial population
     transmission_parameters(model) <- list(beta = beta, kappa = kappa, gamma = gamma, mu = mu)
@@ -213,7 +213,7 @@ server <- function(input, output, session) {
 	          "Recovered (Removed)", "Mortality",
 	          "the rate at which an infected individual exposes susceptible", # beta
 			  "the rate of progression from exposed to infectious (reciprocal of the incubation period)", # kappa
-			  "the fraction of different infected groups", # eta
+			  "the probability of exposed individuals moving into each of the infected groups", # eta
 			  "the rate of disease-caused mortality of the infected", # mu
 			  "the rate of removal (i.e. the recovery rate of the infected)", # kappa
 			  "the rate at which recovered individuals become susceptible (i.e. the loss of immunity)")
@@ -229,27 +229,27 @@ server <- function(input, output, session) {
   # ODE system
   output$sc.dS <- renderUI({
     withMathJax(
-      helpText("$$\\frac{\\text{d}S}{\\text{d}t} = -S \\sum_i{\\beta_{I_i}I_i} + \\omega R$$"))
+      helpText("$$\\frac{\\text{d}S}{\\text{d}t} = -S \\sum_i{\\beta_iI_i} + \\omega R$$"))
   })
   
   output$sc.dE <- renderUI({
     withMathJax(
-      helpText("$$\\frac{\\text{d}E}{\\text{d}t} = S \\sum_i{\\beta_{I_i}I_i} - \\kappa E$$"))
+      helpText("$$\\frac{\\text{d}E}{\\text{d}t} = S \\sum_i{\\beta_iI_i} - \\kappa E$$"))
   })
   
   output$sc.dI <- renderUI({
     withMathJax(
-      helpText("$$\\frac{dI_i}{dt} = \\eta_{E->I_i} \\kappa E - (\\gamma_{I_i} + \\mu_{I_i})I_{i}$$"))
+      helpText("$$\\frac{dI_i}{dt} = \\eta_i} \\kappa E - (\\gamma_i + \\mu_i)I_i$$"))
   })
   
   output$sc.dR <- renderUI({
     withMathJax(
-      helpText("$$\\frac{\\text{d}R}{\\text{d}t} = - \\omega R + \\sum_i{\\gamma_{I_i}I_i}$$"))
+      helpText("$$\\frac{\\text{d}R}{\\text{d}t} = - \\omega R + \\sum_i{\\gamma_iI_i}$$"))
   })
   
   output$sc.dD <- renderUI({
     withMathJax(
-      helpText("$$\\frac{\\text{d}D}{\\text{d}t} = - \\sum_i{\\mu_i I_i}$$"))
+      helpText("$$\\frac{\\text{d}D}{\\text{d}t} = \\sum_i{\\mu_i I_i}$$"))
   })
   
   # model initialization
@@ -581,8 +581,8 @@ server <- function(input, output, session) {
       # set up color palette - more than 8 groups, need to be set manually
       n.cols <- length(unique(output$age_range))
       colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n.cols)
-      model.plot <- ggplot(output, aes(x=time, y=value, colour=age_range)) +
-        geom_line() +
+      model.plot <- ggplot(output, aes(x=time, y=value, fill=age_range)) +
+        geom_bar(stat="identity", position=position_dodge()) +
         facet_grid(vars(compartment), space = "free", scales = "free") +
         scale_color_manual(values = colors) +
         theme_classic()
@@ -617,8 +617,8 @@ server <- function(input, output, session) {
 	  output <- output$changes
 	  # output <- output %>% filter(compartment=="Incidence")
       output <- subset(output, age_range == input$age_range.select)
-      model.plot <- ggplot(output, aes(x=time, y=value)) +
-        geom_line(aes(colour=compartment)) +
+      model.plot <- ggplot(output, aes(x=time, y=value, fill=compartment)) +
+        geom_bar(stat="identity", position=position_dodge()) +
         scale_color_brewer(palette = "Set2") +
         theme_classic()
       model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)

@@ -1,11 +1,13 @@
 # comoexplore
 This is a shiny app accompanied with the R package [`comomodels`](https://github.com/Como-DTC-Collaboration/como-models/) to interactively explore the model behaviors of in response to different transmission parameters.
 
-Currently we support three sub-models: 
+Currently we support five sub-models: 
 
 * **SEIRD** - basic Susceptible-Exposed-Infected-Recovered-Dead model;
-* **SEIaImIsRD** - a symptom-compartment SEIRD model that divide infectious population (I) into asymptomatic (Ia), mild (Im) and severe (Is) groups according to the severity of symptoms;
+* **SEIaImIsRD** - a symptom-compartment SEIRD model that divide the infectious population (I) into asymptomatic (Ia), mild (Im) and severe (Is) groups according to the severity of symptoms;
 * **SEIRDAge** - an age-structured SEIRD model that separate the population into different age ranges.
+* **SEIRDV** - an SEIRD model that includes the vaccinated population group.
+* **SEIRD_RU** - an SEIRD model that considers two interacting communities: urban and rural.
 
 ## Development
 To contribute to this repository, read [DEVELOPMENT.md](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DEVELOPMENT.md)

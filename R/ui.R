@@ -20,7 +20,7 @@ header = dashboardHeader(title = "CoMo Models")
 
 # Interactive params (transmission params)
 sidebar = dashboardSidebar(
-  # SEIRD
+  ## ====================== SEIRD ======================= ##
   conditionalPanel(condition="input.simulation == 'SEIRD_params'", 
                    box(title = "Transmission parameters",
                        width= "100%", background = "black",
@@ -59,7 +59,7 @@ sidebar = dashboardSidebar(
                        )
                    ),
   
-  # SEIaImIsRD
+  ## =================== SEIaImIsRD ===================== ##
   conditionalPanel(condition="input.simulation == 'SEIaImIsRD_params'",
                    box(title = "Transmission parameters",
                        width= "100%", background = "black",
@@ -128,7 +128,8 @@ sidebar = dashboardSidebar(
                            )
                        )
                    ),
-  # SEIRDAge
+
+  ## =================== SEIRD_Age ====================== ##
   conditionalPanel(condition="input.simulation == 'SEIRDAge_params'",
                    # input contact matrices
                    fileInput(inputId = "age.contact.files", label = "Load contact matrices and population (.rda format)", 
@@ -172,7 +173,124 @@ sidebar = dashboardSidebar(
                                        min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0050)
                        )
                    )
-                  )
+  ),
+
+  ## ===================== SEIRDV ======================= ##
+  conditionalPanel(condition="input.simulation == 'SEIRDV_params'",
+                   # transmission params
+                   box(title = "Transmission parameters",
+                       width= "100%", background = "black",
+                       # beta
+                       box(title = withMathJax("$$\\beta$$"),
+                           id = "vac.params.beta",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.beta", label = withMathJax("$$\\beta$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 1.0000)
+                       ),
+                       # kappa
+                       box(title = withMathJax("$$\\kappa$$"),
+                           id = "vac.params.kappa",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
+                           sliderInput(inputId = "vac.kappa", label = withMathJax("$$\\kappa$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000)
+                       ),
+                       # gamma
+                       box(title = withMathJax("$$\\gamma$$"),
+                           id = "vac.params.gamma",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
+                           sliderInput(inputId = "vac.gamma", label = withMathJax("$$\\gamma$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.5000)
+                       ),
+                       # mu
+                       box(title = withMathJax("$$\\mu$$"),
+                           id = "vac.params.mu",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.mu", label = withMathJax("$$\\mu$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0100)
+                       ),
+                       # nu (vac rate)
+                       box(title = withMathJax("$$\\nu$$"),
+                           id = "vac.params.nu",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.nu", label = withMathJax("$$\\nu$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.4000)
+                       ),
+                       # delta (rate of immunity loss)
+                       box(title = withMathJax("$$\\delta_V$$"),
+                           id = "vac.params.delta.v",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.delta.v", label = withMathJax("$$\\delta_V$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.1000)
+                       ),
+                       box(title = withMathJax("$$\\delta_R$$"),
+                           id = "vac.params.delta.r",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.delta.r", label = withMathJax("$$\\delta_R$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0500)
+					   )
+                   )
+  ),
+
+  ## =================== SEIRD_RU ===================== ##
+  conditionalPanel(condition="input.simulation == 'SEIRD_RU_params'",
+                   # input contact matrices
+                   fileInput(inputId = "ru.contact.files", label = "Load contact matrices and demographic data (.rda format)", 
+                             accept = ".rda", multiple = TRUE, placeholder = "Please select files all at once"), 
+                   # select country from the contact matrix info (allow one only)
+                   selectInput(inputId = "ru.country", label = "Select country",
+                               choices = NULL, multiple = FALSE),
+                   # transmission params
+                   box(title = "Transmission parameters",
+                       width= "100%", background = "black",
+                       # beta
+                       box(title = withMathJax("$$\\beta$$"),
+                           id = "ru.params.beta",
+                           width = "100%", background = "black", 
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "ru.beta", label = withMathJax("$$\\beta$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.3000)
+                       ),
+                       # kappa
+                       box(title = withMathJax("$$\\kappa$$"),
+                           id = "ru.params.kappa",
+                           width = "100%", background = "black", 
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
+                           sliderInput(inputId = "ru.kappa", label = withMathJax("$$\\kappa$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.2000)
+                       ),
+                       # gamma
+                       box(title = withMathJax("$$\\gamma$$"),
+                           id = "ru.params.gamma",
+                           width = "100%", background = "black", 
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
+                           sliderInput(inputId = "ru.gamma", label = withMathJax("$$\\gamma$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.1000)
+                       ),
+                       # mu
+                       box(title = withMathJax("$$\\mu$$"),
+                           id = "ru.params.mu",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "ru.mu", label = withMathJax("$$\\mu$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0300)
+                       ),
+					   # C (connectedness)
+                       box(title = withMathJax("Connectedness"),
+                           id = "ru.params.c",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "ru.c", label = withMathJax("Connectedness"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.1000)
+                       )
+                   )
+  )
 )
 
 
@@ -182,7 +300,7 @@ body = dashboardBody(
   
   tabsetPanel(
     id = "simulation",
-    # SEIRD
+    ## ==================== SEIRD ======================== ##
     tabPanel(title="SEIRD", value='SEIRD_params',
              div(class = "col-sm-12 col-md-12 col-lg-10",
 				 fluidRow(
@@ -232,7 +350,7 @@ body = dashboardBody(
 			 )
     ),
     
-    # SEIaImIsRD
+    ## ====================== SEIaImIsRD ============================== ##
     tabPanel(title="SEIaImIsRD", value='SEIaImIsRD_params',
              div(class = "col-sm-12 col-md-12 col-lg-10",
 				 fluidRow(
@@ -281,7 +399,7 @@ body = dashboardBody(
              )
     ),
     
-    # SEIRDAge
+    ## ====================== SEIRDAge ============================ ##
     tabPanel(title="SEIRDAge", value='SEIRDAge_params',
              div(class = "col-sm-12 col-md-12 col-lg-10", # row-sm-12 row-md-6 row-lg-auo",
 				fluidRow(
@@ -346,10 +464,121 @@ body = dashboardBody(
 					         )
                          )
 					 )
-			     )
+			    )
              )
+    ),
+
+
+    ## ====================== SEIRDV ============================ ##
+    tabPanel(title="SEIRDV", value='SEIRDV_params',
+             div(class = "col-sm-12 col-md-12 col-lg-10",
+                fluidRow(
+                        box(width = 6,
+                                title="Model",
+                                collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                                box(width = "100%",
+                                        title = "Diagram",
+                                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                        h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                        grVizOutput(outputId = "vac_model_flowchart"),
+                                        verbatimTextOutput(outputId = "SEIRDV.param.desc")
+                                ),
+                                box(width = "100%",
+                                        title = "SEIRDV ODE system",
+                                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                        fluidPage(uiOutput(outputId = 'vac.dS'),
+                                                uiOutput(outputId = 'vac.dE'),
+                                                uiOutput(outputId = 'vac.dI'),
+                                                uiOutput(outputId = 'vac.dR'),
+                                                uiOutput(outputId = 'vac.dV'),
+                                                uiOutput(outputId = 'vac.dD')
+                                        )
+                                )
+                        ),
+                        box(width = 6,
+                                title="Simulation",
+                                collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                                box(width = "100%",
+                                    title = "States",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+									plotlyOutput(outputId = "SEIRDV.states")
+                                ),
+                                box(width = "100%",
+                                    title = "Daily Incidence and Deaths",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                    plotlyOutput(outputId = "SEIRDV.changes")
+								)
+						)
+				)
+			 )
+    ),
+
+  ## ====================== SEIRD_RU =========================== ##
+    tabPanel(title="SEIRD_RU", value='SEIRD_RU_params',
+             div(class = "col-sm-12 col-md-12 col-lg-10",
+                fluidRow(
+                        box(width = 6,
+                                title="Model",
+                                collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                                box(width = "100%",
+                                    title = "Diagram",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                    h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                    grVizOutput(outputId = "ru_model_flowchart"),
+                                    verbatimTextOutput(outputId = "SEIRD_RU.param.desc")
+                                ),
+                                box(width = "100%",
+                                    title = "SEIRD_RU ODE system",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                    fluidPage(uiOutput(outputId = 'ru.dS'),
+											#uiOutput(outputId = 'ru.dS_Y'),
+                                            uiOutput(outputId = 'ru.dE'),
+											#uiOutput(outputId = 'ru.dE_Y'),
+                                            uiOutput(outputId = 'ru.dI'),
+											#uiOutput(outputId = 'ru.dI_Y'),
+                                            uiOutput(outputId = 'ru.dR'),
+											#uiOutput(outputId = 'ru.dR_Y'),
+											#uiOutput(outputId = 'ru.dC_U'),
+											#uiOutput(outputId = 'ru.dC_Y'),
+                                            uiOutput(outputId = 'ru.dD'),
+											#uiOutput(outputId = 'ru.dD_Y')
+                                    )
+                                ),
+								box(width = "100%", 
+									title="Files loaded ",
+									collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+									verbatimTextOutput(outputId = "ru.contact.names")
+								)
+                        ),
+                        box(width = 6,
+                                title="Simulation",
+                                collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                                box(width = "100%",
+                                    title = "States",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+									plotlyOutput(outputId = "SEIRD_RU.states")
+                                ),
+                                box(width = "100%",
+                                    title = "Daily Incidence and Deaths",
+                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                    plotlyOutput(outputId = "SEIRD_RU.changes")
+								),
+								box(width = "100%",
+									title = "Basic Reproduction Number",
+									collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+									verbatimTextOutput(outputId = "ru.R0")
+								)
+						)
+				)
+			 )
     )
   )
+
+
+
+
+
+
 )
 
 

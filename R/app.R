@@ -26,8 +26,10 @@ library(shinyjs)
 # - should be load before ui.R and server.R
 # - after comomodels is finished we can load the model package directly
 # - by library(comomodels)
+source("R/generics.R")
+source("R/intervention.R")
+source("R/data.R")
 source("R/global.R")
-
 # ui and server
 source("R/ui.R")
 source("R/server.R")

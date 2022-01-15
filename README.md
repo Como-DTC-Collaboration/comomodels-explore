@@ -37,12 +37,12 @@ conda env create -f envs/comomodels-explore.yml
 conda activate comoexplore
 ```
 
-## How to run the app (linux)
+## How to run the app
 ### Run the deployed app online
 Click [here](https://comodtc.shinyapps.io/comomodels-explore/) to easily explore `comomodels-explore` online.
 
 
-### Run the app locally
+### Run the app locally (linux)
 In addition to the deployed web version, `comomodels-explore` is also open accessible and can be run locally.
 * Method 1: the easiest way is to directly download and run the remote version of the app in one command:
 

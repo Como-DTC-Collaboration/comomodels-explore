@@ -1,7 +1,9 @@
-# The main commands to create a shiny app object from
-# an explicit ui/server pair. You can run the application by
-# clicking 'Run App' button above, or run shiny::runApp("R")
-# at the package directory.
+# The main commands to create a shiny app object is from
+# an explicit ui/server pair. 
+# If using rstudio, you can run the application by
+# clicking 'Run App' button above;
+# Or you can run shiny::runApp()
+# from the root directory of tha package.
 
 # packages required by como-models
 library(tidyverse) # tidyselect >1.1.1
@@ -21,8 +23,8 @@ library(miniUI)
 library(shinydashboard)
 library(shinyjs)
 
-# install and load como-models from github (core package)
-if(!requireNamespace("como-models", quietly = TRUE)) {
+# install and load comomodels from github (core package)
+if(!requireNamespace("comomodels", quietly = TRUE)) {
     if (!requireNamespace("devtools", quietly = TRUE))
         install.packages("devtools")
     devtools::install_github("Como-DTC-Collaboration/como-models")

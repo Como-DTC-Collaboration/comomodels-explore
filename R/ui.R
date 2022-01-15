@@ -2,6 +2,29 @@
 # The user-interface definition of a shiny app object.
 #
 
+
+# packages required by como-models
+library(tidyverse) # tidyselect >1.1.1
+library(deSolve)
+library(ggplot2)
+library(reshape2)
+library(magrittr)
+
+library(DiagrammeR)
+library(plotly)
+
+library(shiny)
+library(miniUI)
+library(shinydashboard)
+library(shinyjs)
+
+
+library(comomodels)
+
+# load ancestral SARS-CoV-2 transmission as default transmission parameters
+parameters <- covid_transmission_parameters()
+beta_default <- (parameters$mu + parameters$gamma) * parameters$R0
+
 jscode <- "
 shinyjs.collapse = function(boxid) {
 $('#' + boxid).closest('.box').find('[data-widget=collapse]').click();
@@ -30,7 +53,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "beta", label = withMathJax("$$\\beta$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.800)
+                                       min = 0.000, max = 1.000, step = 0.0001, value = beta_default)
                           ),
                        # kappa
                        box(title = withMathJax("$$\\kappa$$"),
@@ -38,7 +61,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "kappa", label = withMathJax("$$\\kappa$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.500)
+                                       min = 0.000, max = 1.000, step = 0.0001, value = parameters$kappa)
                           ),
                        # gamma
                        box(title = withMathJax("$$\\gamma$$"),
@@ -46,7 +69,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "gamma", label = withMathJax("$$\\gamma$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$gamma)
                           ),
                        # mu
                        box(title = withMathJax("$$\\mu$$"),
@@ -54,7 +77,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "mu", label = withMathJax("$$\\mu$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0050)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$mu)
                           )
                        )
                    ),
@@ -69,7 +92,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "sc.beta.ia", label = withMathJax("$$\\beta_{I_a}$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.800),
+                                       min = 0.000, max = 1.500, step = 0.0001, value = 0.800),
                            sliderInput(inputId = "sc.beta.im", label = withMathJax("$$\\beta_{I_m}$$"),
                                        min = 0.000, max = 1.000, step = 0.0001, value = 0.900),
                            sliderInput(inputId = "sc.beta.is", label = withMathJax("$$\\beta_{I_s}$$"),
@@ -81,16 +104,16 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "sc.kappa", label = withMathJax("$$\\kappa$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.500)
+                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.1000)
                        ),
-                       # omega
-                       box(title = withMathJax("$$\\omega$$"),
-                           id = "sc.params.omega",
-                           width = "100%", background = "black",
-                           collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
-                           sliderInput(inputId = "sc.omega", label = withMathJax("$$\\omega$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.500)
-                       ),
+                       # omega (REMOVED)
+                       #box(title = withMathJax("$$\\omega$$"),
+                       #    id = "sc.params.omega",
+                       #    width = "100%", background = "black",
+                       #    collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
+                       #    sliderInput(inputId = "sc.omega", label = withMathJax("$$\\omega$$"),
+                       #                min = 0.000, max = 1.000, step = 0.0001, value = 0.500)
+                       #),
                        # p_symptom
                        box(title = withMathJax("$$\\eta$$"),
                            id = "sc.params.p_symptom",
@@ -111,7 +134,7 @@ sidebar = dashboardSidebar(
                            sliderInput(inputId = "sc.gamma.im", label = withMathJax("$$\\gamma_{I_m}$$"),
                                        min = 0.000, max = 1.000, step = 0.0001, value = 0.5000),
                            sliderInput(inputId = "sc.gamma.is", label = withMathJax("$$\\gamma_{I_s}$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.0500)
+                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.0100)
                        ),
   
                        # mu
@@ -146,7 +169,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "age.beta", label = withMathJax("$$\\beta$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.800)
+                                       min = 0.000, max = 1.500, step = 0.0001, value = beta_default)
                        ),
                        # kappa
                        box(title = withMathJax("$$\\kappa$$"),
@@ -154,7 +177,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "age.kappa", label = withMathJax("$$\\kappa$$"),
-                                       min = 0.000, max = 1.000, step = 0.0001, value = 0.500)
+                                       min = 0.000, max = 1.000, step = 0.0001, value = parameters$kappa)
                        ),
                        # gamma
                        box(title = withMathJax("$$\\gamma$$"),
@@ -162,7 +185,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "age.gamma", label = withMathJax("$$\\gamma$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$gamma)
                        ),
                        # mu
                        box(title = withMathJax("$$\\mu$$"),
@@ -170,7 +193,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "age.mu", label = withMathJax("$$\\mu$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0050)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$mu)
                        )
                    )
   ),
@@ -186,7 +209,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "vac.beta", label = withMathJax("$$\\beta$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 1.0000)
+                                       min = 0.0000, max = 1.5000, step = 0.0001, value = beta_default)
                        ),
                        # kappa
                        box(title = withMathJax("$$\\kappa$$"),
@@ -194,7 +217,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "vac.kappa", label = withMathJax("$$\\kappa$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.9000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$kappa)
                        ),
                        # gamma
                        box(title = withMathJax("$$\\gamma$$"),
@@ -202,7 +225,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "vac.gamma", label = withMathJax("$$\\gamma$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.5000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$gamma)
                        ),
                        # mu
                        box(title = withMathJax("$$\\mu$$"),
@@ -210,7 +233,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "vac.mu", label = withMathJax("$$\\mu$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0100)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$mu)
                        ),
                        # nu (vac rate)
                        box(title = withMathJax("$$\\nu$$"),
@@ -234,6 +257,13 @@ sidebar = dashboardSidebar(
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "vac.delta.r", label = withMathJax("$$\\delta_R$$"),
                                        min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0500)
+					   ),
+                       box(title = withMathJax("$$\\delta_{VR}$$"),
+                           id = "vac.params.delta.vr",
+                           width = "100%", background = "black",
+                           collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
+                           sliderInput(inputId = "vac.delta.vr", label = withMathJax("$$\\delta_{VR}$$"),
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0200)
 					   )
                    )
   ),
@@ -255,7 +285,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "ru.beta", label = withMathJax("$$\\beta$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.3000)
+                                       min = 0.0000, max = 1.5000, step = 0.0001, value = beta_default)
                        ),
                        # kappa
                        box(title = withMathJax("$$\\kappa$$"),
@@ -263,7 +293,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "ru.kappa", label = withMathJax("$$\\kappa$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.2000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$kappa)
                        ),
                        # gamma
                        box(title = withMathJax("$$\\gamma$$"),
@@ -271,7 +301,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black", 
                            collapsible = TRUE, status = "primary", solidHeader = FALSE,  collapsed = TRUE,
                            sliderInput(inputId = "ru.gamma", label = withMathJax("$$\\gamma$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.1000)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$gamma)
                        ),
                        # mu
                        box(title = withMathJax("$$\\mu$$"),
@@ -279,7 +309,7 @@ sidebar = dashboardSidebar(
                            width = "100%", background = "black",
                            collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = TRUE,
                            sliderInput(inputId = "ru.mu", label = withMathJax("$$\\mu$$"),
-                                       min = 0.0000, max = 1.0000, step = 0.0001, value = 0.0300)
+                                       min = 0.0000, max = 1.0000, step = 0.0001, value = parameters$mu)
                        ),
 					   # C (connectedness)
                        box(title = withMathJax("Connectedness"),
@@ -299,55 +329,62 @@ body = dashboardBody(
   # extendShinyjs(text = jscode, functions = c("winprint")),
   
   tabsetPanel(
-    id = "simulation",
-    ## ==================== SEIRD ======================== ##
-    tabPanel(title="SEIRD", value='SEIRD_params',
-             div(class = "col-sm-12 col-md-12 col-lg-10",
-				 fluidRow(
-					 box(width = 6, 
-						 title="Model",
-						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-						 # actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
-						 box(width = "100%",
-							 title = "Diagram",
-							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-							 h5("Please click on the transmission parameters you want to modify on the diagram below:"),
-							 grVizOutput(outputId = "model_flowchart"),
-							 verbatimTextOutput(outputId = "SEIRD.param.desc")
-						 ),
-						 box(width = "100%",
-							 title = "SEIRD ODE system",
-							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-							 fluidPage(uiOutput(outputId = 'dS'),
-									   uiOutput(outputId = 'dE'),
-									   uiOutput(outputId = 'dI'),
-									   uiOutput(outputId = 'dR'),
-									   uiOutput(outputId = 'dD')
-							 )
-						 )
-					 ),
-					 # actionButton("slider.hide.beta", "hide beta"),
-					 box(width = 6, 
-						 title="Simulation",
-						 collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-						 box(width = "100%",
-						     title = "States",
-						     collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                             plotlyOutput(outputId = "SEIRD.states")
-						 ),
-						 box(width = "100%",
-							 title = "Daily Incidence and Deaths",
-							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-							 plotlyOutput(outputId = "SEIRD.changes")
-						 ),
-						 box(width = "100%",
-							 title = "Basic Reproduction Number",
-							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-							 verbatimTextOutput(outputId = "R0")
-						 )
-					 )
-				 )
-			 )
+      id = "simulation",
+      ## ==================== SEIRD ======================== ##
+      tabPanel(title="SEIRD", value='SEIRD_params',
+        div(class = "col-sm-12 col-md-12 col-lg-10",
+            fluidRow(
+                box(width = 6, 
+                    title="Model",
+					collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+					# actionButton(inputId = "control.params.beta", label = withMathJax("$\\beta$")),
+					box(width = "100%",
+					    title = "Diagram",
+						collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+						h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+						grVizOutput(outputId = "model_flowchart"),
+						verbatimTextOutput(outputId = "SEIRD.param.desc")
+                        ),
+					box(width = "100%",
+						title = "SEIRD ODE system",
+						collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+						fluidPage(
+                            uiOutput(outputId = 'dS'),
+                            uiOutput(outputId = 'dE'),
+							uiOutput(outputId = 'dI'),
+							uiOutput(outputId = 'dR'),
+                            uiOutput(outputId = 'dD')
+                            )
+						)
+                    ),
+                # actionButton("slider.hide.beta", "hide beta"),
+                box(width = 6, 
+                    title="Simulation",
+                    collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                    box(width = "100%",
+                        title = "Download simulation results",
+                        collapsible = FALSE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                        downloadButton("download.SEIRD", "Download"),
+                        #downloadButton("download.SEIRD.changes", "Changes")
+                        ),
+                    box(width = "100%",
+                        title = "States",
+                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                        plotlyOutput(outputId = "SEIRD.states")
+                        ),
+                    box(width = "100%",
+                        title = "Daily Incidence and Deaths",
+                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                        plotlyOutput(outputId = "SEIRD.changes")
+                        ),
+                    box(width = "100%",
+                        title = "Basic Reproduction Number",
+                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                        verbatimTextOutput(outputId = "R0")
+                        ),
+                    )
+                )
+        )
     ),
     
     ## ====================== SEIaImIsRD ============================== ##
@@ -357,7 +394,6 @@ body = dashboardBody(
 					 box(width = 6, 
 						 title="Model",
 						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-						 # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
 						 box(width = "100%",
 							 title = "Diagram",
 							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
@@ -406,7 +442,6 @@ body = dashboardBody(
 					 box(width = 6, 
 						 title="Model",
 						 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-						 # actionButton(inputId = "control.params.sc.beta", label = withMathJax("$$\\beta$$")),
 						 box(width = "100%",
 							 title = "Diagram",
 							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
@@ -491,6 +526,7 @@ body = dashboardBody(
                                                 uiOutput(outputId = 'vac.dI'),
                                                 uiOutput(outputId = 'vac.dR'),
                                                 uiOutput(outputId = 'vac.dV'),
+                                                uiOutput(outputId = 'vac.dVR'),
                                                 uiOutput(outputId = 'vac.dD')
                                         )
                                 )
@@ -518,70 +554,64 @@ body = dashboardBody(
              div(class = "col-sm-12 col-md-12 col-lg-10",
                 fluidRow(
                         box(width = 6,
-                                title="Model",
+                            title="Model",
+                            collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
+                            box(width = "100%",
+                                title = "Diagram",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                h5("Please click on the transmission parameters you want to modify on the diagram below:"),
+                                grVizOutput(outputId = "ru_model_flowchart"),
+                                verbatimTextOutput(outputId = "SEIRD_RU.param.desc")
+                                ),
+                            box(width = "100%",
+                                title = "SEIRD_RU ODE system",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                fluidPage(uiOutput(outputId = 'ru.dS'),
+                                        #uiOutput(outputId = 'ru.dS_Y'),
+                                        uiOutput(outputId = 'ru.dE'),
+                                        #uiOutput(outputId = 'ru.dE_Y'),
+                                        uiOutput(outputId = 'ru.dI'),
+                                        #uiOutput(outputId = 'ru.dI_Y'),
+                                        uiOutput(outputId = 'ru.dR'),
+                                        #uiOutput(outputId = 'ru.dR_Y'),
+                                        #uiOutput(outputId = 'ru.dC_U'),
+                                        #uiOutput(outputId = 'ru.dC_Y'),
+                                        uiOutput(outputId = 'ru.dD'),
+                                        #uiOutput(outputId = 'ru.dD_Y')
+                                        )
+                                ),
+                            box(width = "100%", 
+                                title="Files loaded ",
                                 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-                                box(width = "100%",
-                                    title = "Diagram",
-                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                                    h5("Please click on the transmission parameters you want to modify on the diagram below:"),
-                                    grVizOutput(outputId = "ru_model_flowchart"),
-                                    verbatimTextOutput(outputId = "SEIRD_RU.param.desc")
-                                ),
-                                box(width = "100%",
-                                    title = "SEIRD_RU ODE system",
-                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                                    fluidPage(uiOutput(outputId = 'ru.dS'),
-											#uiOutput(outputId = 'ru.dS_Y'),
-                                            uiOutput(outputId = 'ru.dE'),
-											#uiOutput(outputId = 'ru.dE_Y'),
-                                            uiOutput(outputId = 'ru.dI'),
-											#uiOutput(outputId = 'ru.dI_Y'),
-                                            uiOutput(outputId = 'ru.dR'),
-											#uiOutput(outputId = 'ru.dR_Y'),
-											#uiOutput(outputId = 'ru.dC_U'),
-											#uiOutput(outputId = 'ru.dC_Y'),
-                                            uiOutput(outputId = 'ru.dD'),
-											#uiOutput(outputId = 'ru.dD_Y')
-                                    )
-                                ),
-								box(width = "100%", 
-									title="Files loaded ",
-									collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
-									verbatimTextOutput(outputId = "ru.contact.names")
-								)
-                        ),
+                                verbatimTextOutput(outputId = "ru.contact.names")
+                                )
+                            ),
                         box(width = 6,
-                                title="Simulation",
-                                collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
-                                box(width = "100%",
-                                    title = "States",
-                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-									plotlyOutput(outputId = "SEIRD_RU.states")
+                            title="Simulation",
+                            collapsible = TRUE, status = "primary", solidHeader = TRUE,  collapsed = FALSE,
+                            box(width = "100%",
+                                title = "States",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                plotlyOutput(outputId = "SEIRD_RU.states")
                                 ),
-                                box(width = "100%",
-                                    title = "Daily Incidence and Deaths",
-                                    collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                                    plotlyOutput(outputId = "SEIRD_RU.changes")
-								),
-								box(width = "100%",
-									title = "Basic Reproduction Number",
-									collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-									verbatimTextOutput(outputId = "ru.R0")
-								)
-						)
-				)
-			 )
-    )
+                            box(width = "100%",
+                                title = "Daily Incidence and Deaths",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                plotlyOutput(outputId = "SEIRD_RU.changes")
+                                ),
+                            box(width = "100%",
+                                title = "Basic Reproduction Number",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                verbatimTextOutput(outputId = "ru.R0")
+                                )
+                            )
+                        )
+                )
+            )
   )
-
-
-
-
-
-
 )
 
-
+# create ui
 ui <- dashboardPage(
   title = "CoMo Models",
   header = dashboardHeader(title = "CoMo Models"),

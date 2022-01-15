@@ -21,15 +21,14 @@ library(miniUI)
 library(shinydashboard)
 library(shinyjs)
 
+# install and load como-models from github (core package)
+if(!requireNamespace("como-models", quietly = TRUE)) {
+    if (!requireNamespace("devtools", quietly = TRUE))
+        install.packages("devtools")
+    devtools::install_github("Como-DTC-Collaboration/como-models")
+}
+library(comomodels)
 
-# the core model (comomodels)
-# - should be load before ui.R and server.R
-# - after comomodels is finished we can load the model package directly
-# - by library(comomodels)
-source("R/generics.R")
-source("R/intervention.R")
-source("R/data.R")
-source("R/global.R")
 # ui and server
 source("R/ui.R")
 source("R/server.R")

@@ -10,11 +10,13 @@ Currently we support five sub-models:
 * **SEIRD_RU** - an SEIRD model that considers two interacting communities: urban and rural.
 
 ## Development
-To contribute to this repository, read [DEVELOPMENT.md](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DEVELOPMENT.md)
+To contribute to this repository, please read [DEVELOPMENT.md](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DEVELOPMENT.md)
+
 
 ## Installations
 ### Dependencies
-To check which R packages are required by the package, please refer to [DESCRIPTION](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DESCRIPTION) or the conda environment list [comomodels-explore.yml](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/envs/comomodels-explore.yml)
+* Packages: A number of R packages are required for the app. For the details please check [DESCRIPTION](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/DESCRIPTION) and the conda environment list [comomodels-explore.yml](https://github.com/Como-DTC-Collaboration/comomodels-explore/blob/main/envs/comomodels-explore.yml)
+* Data: Some models (e.g. SEIRDAge and SEIRD_RU) require the loading of extra data, such as social contact matrices between age groups and country-specific population data, etc. The default data in `comomodels` are in .rda format and also provided here in the `./data` folder, which are fully usable as an example. Referring to the same format, Users can also create and use customised data.
 
 #### Install using `conda`
 
@@ -36,8 +38,12 @@ conda activate comoexplore
 ```
 
 ## How to run the app (linux)
-The app is **NOT deployed** yet, so you have to run it locally:
+### Run the deployed app online
+`comomodels-explore` is deployed at shinyapps.io. Click [here] to play around with it online. 
 
+
+### Run the app locally
+In addition to the deployed web version, `comomodels-explore` is also open accessible and can be run locally.
 * Method 1: the easiest way is to directly download and run the remote version of the app in one command:
 
 ```
@@ -50,7 +56,7 @@ shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/arch
 shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/archive/main.zip")
 ```
 
-* Method 2: you can first clone the git repository, then run the app:
+* Method 2 (recommended for developers): you can first clone the git repository, then run the app:
 
 ```
 # (in terminal)
@@ -58,24 +64,14 @@ shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/arch
 git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
 cd comomodels-explore/
 
-# in terminal, start an R environment
-Rscript comoexplore.Rproj
-    
-# in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
-setwd(".")
-devtools::load_all()
-## if you are using an interactive R session (e.g. RStudio):
-shiny::runApp(appDir = "R")
-## otherwise, set `launch.browser=FALSE` if you are using a non-interactive R session and manually launch the browser in the next step:
-shiny::runApp(appDir = "R", launch.browser=FALSE)
-```
+# in terminal, run the app:
+Rscript ./app.R
 
-Either way, a local URL will appear on your R console, e.g.:
+a local URL will appear on your terminal, e.g.:
 ```
 Listening on http://127.0.0.1:5554
 ```
+The corresponding interface pop out may automatically pop out. If not, you can manually copy-and-paste the above URL to any web server. 
 
-`R/app.R` will be automatically run and pop out a web interface. If not, you can manually copy-and-paste the above URL to any web server. 
-
-You can now play around with the parameters on the web interface.
+You can now play around with the parameters on the interface.
 

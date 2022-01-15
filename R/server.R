@@ -1,6 +1,26 @@
 #
 # The server definition of a shiny app object.
 #
+# packages required by como-models
+library(tidyverse) # tidyselect >1.1.1
+library(deSolve)
+library(ggplot2)
+library(reshape2)
+library(magrittr)
+
+library(DiagrammeR)
+library(plotly)
+
+library(shiny)
+library(miniUI)
+library(shinydashboard)
+library(shinyjs)
+
+
+library(comomodels)
+
+
+
 server <- function(input, output, session) {
   
   rv <- reactiveValues()
@@ -131,7 +151,7 @@ server <- function(input, output, session) {
     model.plot <- ggplot(output$states, aes(x = time, y = value)) +
                    geom_line(aes(color = compartment)) +
                    scale_color_brewer(palette = "Dark2") +
-                   labs(x = "time (days)", y = "fraction of the population") +
+                   labs(x = "time (days)", y = "Population proportion") +
                    theme(legend.position = "bottom", legend.title = element_blank())
                    # theme(text = element_text(size = 20)) 
     #  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
@@ -145,7 +165,7 @@ server <- function(input, output, session) {
     output <- model0.output()
     model.plot <- ggplot(output$changes, aes(x = time, y = value, fill = compartment)) +
                     geom_bar(stat="identity", position = position_dodge()) +
-                    labs(x = "time (days)", y = "fraction of the population per day") +
+                    labs(x = "time (days)", y = "Population proportion per day") +
                     theme(legend.position = "bottom", legend.title = element_blank()) #, text = element_text(size = 20)) +
                     scale_fill_brewer(palette = "Dark2")
     model.plot <- ggplotly(model.plot)
@@ -160,6 +180,19 @@ server <- function(input, output, session) {
     # calculate R0
     paste0("R0 = ", R0(model))
   })
+
+  # Download csv of simulation result
+  output$download.SEIRD <- downloadHandler(
+    #output <- model0.output()
+    filename = function() {
+      paste0("SEIRD_simulation_results", ".csv")
+    },
+    content = function(file) {
+      output <- model0.output()
+      output.merge <- rbind(output$states %>% mutate(group_type="states"), output$changes %>% mutate(group_type="changes"))
+      write.table(output.merge, row.names=T, col.names=T, sep=",", quote=FALSE, file=file)
+    }
+  )
   
   
   #%%%%%%%%%%%
@@ -264,8 +297,7 @@ server <- function(input, output, session) {
     # params
     beta <- list(asymptomatic = input$sc.beta.ia, mild = input$sc.beta.im, severe = input$sc.beta.is)
     kappa <- input$sc.kappa
-    omega <- input$sc.omega
-    p_symptom <- list(mild = input$sc.p_symptom.im, severe = input$sc.p_symptom.is)
+    eta_symptom <- list(mild = input$sc.p_symptom.im, severe = input$sc.p_symptom.is)
     gamma <- list(asymptomatic = input$sc.gamma.ia, mild = input$sc.gamma.im, severe = input$sc.gamma.is)
     mu <- list(asymptomatic = input$sc.mu.ia, mild = input$sc.mu.im, severe = input$sc.mu.is)
     
@@ -285,7 +317,7 @@ server <- function(input, output, session) {
     # 1. create the instance in class SEIaImIsRD
     model <- SEIaImIsRD()
     # 2. set up parameters and initial population
-    transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+    transmission_parameters(model) <- list(beta = beta, kappa = kappa, p_symptom = eta_symptom, gamma = gamma, mu = mu)
     initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
     
     return(model)
@@ -655,7 +687,7 @@ server <- function(input, output, session) {
       # global node settings
       node [shape = box, fontname = Helvetica, fixedsize = true, 
             style = filled, fillcolor = lightgray, width = 0.6]
-      S;E;I;R;V;D
+      S;E;I;R;V;VR;D
       node [shape = circle, fillcolor = lightblue, width = 0.3]
       beta[label = <&#946;>];
       kappa[label = <&#954;>];
@@ -663,6 +695,7 @@ server <- function(input, output, session) {
       gamma[label =  <&#947;>];
       deltar[label = <&#948;>];
       deltav[label = <&#948;>];
+      deltavr[label = <&#948;>];
       nu[label = <&#957;>];
       
       # edge definitions with the node IDs
@@ -674,15 +707,19 @@ server <- function(input, output, session) {
       I -> gamma
       I -> mu
       R -> deltar
+      R -> nu
       V -> deltav
+      VR -> deltavr
       edge [arrowhead=vee]
       beta -> E
       nu -> V
+      nu -> VR
       kappa -> I
       gamma -> R
       mu -> D
       deltar -> S
       deltav -> S
+      deltavr -> S
       }")
   )
 
@@ -692,18 +729,21 @@ server <- function(input, output, session) {
 	nodeid.int <- strsplit(nodeid, "node")[[1]][2] %>% as.integer()
 	nodeval <- input$vac_model_flowchart_click$nodeValues
 	desc <- c("Susceptible", "Exposed", "Infected", 
-	          "Recovered (Removed)", "Vaccinated", "Mortality",
+	          "Recovered (Removed)", "Vaccinated", "Vaccinated that after previously infected recovered", "Mortality",
 	          "the rate at which an infected individual exposes susceptible", # beta
 			  "the rate of progression from exposed to infectious (reciprocal of the incubation period)", # kappa
 			  "the rate of disease-caused mortality of the infected", # mu
 			  "the rate of removal (i.e. the recovery rate of the infected)", # gamma
 			  "the rate at which recovered individuals become susceptible (i.e. the loss of immunity)", # deltar
-                          "the rate at which vaccinated individuals become susceptible (i.e. the loss of immunity)", # deltav
-                          "the rate of vaccination in susceptible population") # nu
-	trans.params <- c("beta", "kappa", "mu", "gamma", "deltar", "deltav", "nu")
+        "the rate at which vaccinated individuals who were previously infected and recovered become susceptible (i.e. the loss of immunity)", # deltavr
+        "the rate at which vaccinated individuals become susceptible (i.e. the loss of immunity)", # deltav
+        "the rate of vaccination in susceptible population") # nu
+	trans.params <- c("beta", "kappa", "mu", "gamma", "deltar", "deltav", "deltavr", "nu")
 	output$SEIRDV.param.desc <- renderText({paste0(nodeval[[length(nodeval)]], ": ", desc[nodeid.int])})
-	if(nodeid.int %in% seq(7, 13)){
-	  shinyjs::toggle(id=paste0("vac.params.", trans.params[nodeid.int - 6]))
+  n_init <- 7
+  n_trans_params <- 8 
+	if(nodeid.int %in% seq(n_init+1, n_init+n_trans_params)){
+	  shinyjs::toggle(id=paste0("vac.params.", trans.params[nodeid.int - n_init]))
 	}
   })
 
@@ -711,7 +751,7 @@ server <- function(input, output, session) {
   # ODE system
   output$vac.dS <- renderUI({
     withMathJax(
-      helpText("$$\\frac{\\text{d}S}{\\text{d}t} = -S \\beta I - \nu \\text{Inter}(t) S + \\delta_V V + \\delta_R R$$"))
+      helpText("$$\\frac{\\text{d}S}{\\text{d}t} = -S \\beta I - \nu \\text{Inter}(t) S + \\delta_V V + \\delta_R R + \\delta_{VR} VR$$"))
   })
   
   output$vac.dE <- renderUI({
@@ -733,6 +773,11 @@ server <- function(input, output, session) {
     withMathJax(
       helpText("$$\\frac{\\text{d}V}{\\text{d}t} = \\nu Inter(t) S - \\delta_V V$$"))
   })
+
+  output$vac.dVR <- renderUI({
+    withMathJax(
+      helpText("$$\\frac{\\text{d}VR}{\\text{d}t} = \\nu Inter(t) R - \\delta_{VR} VR$$"))
+  })
   
   output$vac.dD <- renderUI({
     withMathJax(
@@ -753,7 +798,8 @@ server <- function(input, output, session) {
     nu <- input$vac.nu
     delta_R <- input$vac.delta.r
     delta_V <- input$vac.delta.v
-    
+    delta_VR <- input$vac.delta.vr
+  
     # Test model
     
     # set up test data:
@@ -763,13 +809,15 @@ server <- function(input, output, session) {
     I <- 0.01
     R <- 0.00
     V <- 0.00
+    VR <- 0.00
     
     
     # 1. create the instance in class SEIRDV
     model <- SEIRDV()
     # 2. set up parameters and initial population
-    transmission_parameters(model) <- list(beta = beta, kappa = kappa, gamma = gamma, mu = mu, nu = nu, delta_V = delta_V, delta_R = delta_R)
-    initial_conditions(model) <- list(S0 = S, E0 = E, I0 = I, R0 = R, V0 = V)
+    transmission_parameters(model) <- list(beta = beta, kappa = kappa, gamma = gamma, mu = mu, 
+                                           nu = nu, delta_V = delta_V, delta_R = delta_R, delta_VR = delta_VR)
+    initial_conditions(model) <- list(S0 = S, E0 = E, I0 = I, R0 = R, V0 = V, VR0 = VR)
     intervention_parameters(model) <- list(starts=c(17, 35, 42),
                                           stops=c(25, 39, 49),
                                           coverages=c(1, 1, 1))
@@ -949,27 +997,29 @@ server <- function(input, output, session) {
       names_urban <- names(contact_all_urban)
       names_rural <- names(contact_all_rural)
       names_common <- intersect(names_urban,names_rural)
-	  # demographic data
-	  # data on percentage of the population that is rural
-      percentrural_by_country <- rda$percentrural_by_country
-	  # age demographic breakdown into 5-year age categories
-	  agedemographics_by_country <- rda$agedemographics_by_country
-	  # conversion table from 3 letter country codes to full names
-	  country_codetoname <- rda$country_codetoname
-	  
-	  # get full name of country
-      # country_fullname <- country_codetoname$CountryName[country_codetoname$CountryCode == country]
-	  country_fullname <- input$ru.country
-	  # get country code (equals to the original vignette country code)
-	  country <- country_codetoname$CountryCode[country_codetoname$CountryName == country_fullname]
-      country_rural <- percentrural_by_country$`2019`[percentrural_by_country$`Country Code` == country]  ## ??? can we select other years???
-	  frac_rural <- country_rural/100 # turn percentage into fraction
 
-	  # get fraction of population in each 5-year age range
-	  # extract age demographic vector
+	    # demographic data
+	    # data on percentage of the population that is rural
+      percentrural_by_country <- rda$percentrural_by_country
+	    # age demographic breakdown into 5-year age categories
+	    agedemographics_by_country <- rda$agedemographics_by_country
+	    # conversion table from 3 letter country codes to full names
+	    country_codetoname <- rda$country_codetoname
+	  
+	    # get full name of country
+      # country_fullname <- country_codetoname$CountryName[country_codetoname$CountryCode == country]
+	    country_fullname <- input$ru.country
+	    # get country code (equals to the original vignette country code)
+	    country <- country_codetoname$CountryCode[country_codetoname$CountryName == country_fullname]
+      ## ??? Allow the choose of other years???
+      country_rural <- percentrural_by_country$`2019`[percentrural_by_country$`Country Code` == country]
+	    frac_rural <- country_rural/100 # turn percentage into fraction
+
+	    # get fraction of population in each 5-year age range
+	    # extract age demographic vector
       pop_byage_2019 <- agedemographics_by_country[(agedemographics_by_country$`Region, subregion, country or area *` == country_fullname
-                                     & agedemographics_by_country$`Reference date (as of 1 July)` == 2019),5:25]
-	  pop_byage_2019 <- as.double(pop_byage_2019)
+          & agedemographics_by_country$`Reference date (as of 1 July)` == 2019), 5:25]
+	    pop_byage_2019 <- as.double(pop_byage_2019)
       # normalize to fractions of the total population
       pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) 
       # must sum last five entries because contact matrices have an 80+ category instead of 100+
@@ -980,30 +1030,32 @@ server <- function(input, output, session) {
       kappa <- input$ru.kappa
       gamma <- input$ru.gamma
       mu <- input$ru.mu
-	  Connectedness <- input$ru.c
+	    Connectedness <- input$ru.c # connectedness parameter
       
       start_infected_urban = 0.0001
-	  start_infected_rural = 0
-	  S0U = 1-frac_rural - start_infected_urban
-	  E0U = 0
-	  I0U = start_infected_urban
-	  R0U = 0
-	  S0Y = frac_rural - start_infected_rural
-	  E0Y = 0
-	  I0Y = start_infected_rural
-	  R0Y = 0
+	    start_infected_rural = 0
+
+	    S0U = 1 - frac_rural - start_infected_urban
+	    E0U = 0
+	    I0U = start_infected_urban
+	    R0U = 0
+	    S0Y = frac_rural - start_infected_rural
+	    E0Y = 0
+	    I0Y = start_infected_rural
+	    R0Y = 0
       
-	  # initialize model
+	    # initialize model
       model <- SEIRD_RU()
-	  # set transmission params
+	    # set transmission params
       transmission_parameters(model) <- list(b=beta, k=kappa, g=gamma, mu=mu, C=Connectedness)
-	  # set initial conditions
-	  initial_conditions(model) <- list(S0U, E0U, I0U, R0U, S0Y, E0Y, I0Y, R0Y)
-	  #set demographic data
-	  country_demog(model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+	    # set initial conditions
+	    initial_conditions(model) <- list(S0U, E0U, I0U, R0U, 
+                                        S0Y, E0Y, I0Y, R0Y)
+	    #set demographic data
+	    country_demog(model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
       # set contact matrices
       contact_rates(model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
-	  ## ??? For some countries, the contact_all_urban[[country]] contains NAs!!!! cause error
+	    ## ??? For some countries, the contact_all_urban[[country]] contains NAs!!!! cause error
 
       return(model)
     }
@@ -1016,7 +1068,7 @@ server <- function(input, output, session) {
       return ()
     else{
       model <- model0.ru()
-	  tend = 80
+	    tend = 80
       t <- seq(0, tend, by = 1)
       output <- run(model, t)
 	  # dim(output)
@@ -1070,8 +1122,6 @@ server <- function(input, output, session) {
     R0 <- R0(model)
     paste0("R0 = ", R0)
   })
-  
-
 
 }
 

@@ -1,13 +1,9 @@
 Package: comoexplore
 Title: A shiny app accompanied with the package comomodels
-Version: 0.0.0.9000
+Version: 0.0.0.1000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: This is a shiny app which provides interactive explorations of transmission parameters for several submodels in comomodels. 
+    person("The Como-DTC Development Team", email = "como-models@dtc.ox.ac.uk", role = c("aut", "cre"))
+Description: This is a shiny app which provides interactive explorations of epidemic dynamics for several submodels in comomodels. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

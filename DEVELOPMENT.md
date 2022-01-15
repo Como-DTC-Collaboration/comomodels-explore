@@ -8,7 +8,9 @@ Shiny is an R package built on top of HTML to develop web apps directly from R. 
 In this app, the two components are written in two separate files: `R/ui.R` and `R/server.R`. The `app.R` contains the main commands that create a shiny app object from an explicit ui/server pair.
 
 ## The core: comomodels
-The `R/global.R` file is the current sources of `comomodels`, which is copy-and-pasted from different branches of [comomodels](https://github.com/Como-DTC-Collaboration/como-models). Once we merge the branches and finalise the model, this file can be replaced by simply importing `library(comomodels)` in the beginning of `R/app.R`.
+`comomodels` is the core package for tha app which contains all submodels we need to demonstrate, data and supporting functions. In `app.R`, we install it from github by calling `devtools::install_github("Como-DTC-Collaboration/como-models")` and load the package.
+
+
 
 ## Useful resources for shiny development
 * [The shiny rstudio main website](https://shiny.rstudio.com/)

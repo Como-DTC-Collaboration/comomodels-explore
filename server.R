@@ -1,24 +1,26 @@
 #
 # The server definition of a shiny app object.
 #
-# packages required by como-models
+# packages required by comomodels
 library(tidyverse) # tidyselect >1.1.1
 library(deSolve)
 library(ggplot2)
 library(reshape2)
 library(magrittr)
 
+# packages for drawing model diagram
 library(DiagrammeR)
+# packages for building interactive plots
 library(plotly)
 
+# packages for building shiny app
 library(shiny)
 library(miniUI)
 library(shinydashboard)
 library(shinyjs)
 
-
+# core package
 library(comomodels)
-
 
 
 server <- function(input, output, session) {

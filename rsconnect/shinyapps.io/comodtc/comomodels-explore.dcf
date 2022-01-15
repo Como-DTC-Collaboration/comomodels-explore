@@ -1,0 +1,14 @@
+name: comomodels-explore
+title: comomodels-explore
+username:
+account: comodtc
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5319368
+bundleId: 5472744
+url: https://comodtc.shinyapps.io/comomodels-explore/
+when: 1642290708.33607
+lastSyncTime: 1642290708.33609
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rbuildignore|CHANGELOG.md|DESCRIPTION|DEVELOPMENT.md|envs/comomodels-explore.yml|install_comomodels.R|README.md

@@ -39,7 +39,7 @@ conda activate comoexplore
 
 ## How to run the app (linux)
 ### Run the deployed app online
-`comomodels-explore` is deployed at shinyapps.io. Click [here] to play around with it online. 
+Click [here](https://comodtc.shinyapps.io/comomodels-explore/) to easily explore `comomodels-explore` online.
 
 
 ### Run the app locally
@@ -68,7 +68,7 @@ cd comomodels-explore/
 Rscript ./app.R
 
 a local URL will appear on your terminal, e.g.:
-```
+
 Listening on http://127.0.0.1:5554
 ```
 The corresponding interface pop out may automatically pop out. If not, you can manually copy-and-paste the above URL to any web server. 

@@ -80,7 +80,7 @@ Either way, a local URL will appear on your R console, e.g.:
 Listening on http://127.0.0.1:5554
 ```
 
-The corresponding interface pop out may automatically pop out. If not, you can manually copy-and-paste the above URL to any web server. 
+The corresponding interface may automatically pop out. If not, you can manually copy-and-paste the above URL to any web server. 
 
 You can now play around with the parameters on the interface.
 

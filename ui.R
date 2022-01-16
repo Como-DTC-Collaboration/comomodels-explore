@@ -356,7 +356,12 @@ body = dashboardBody(
 							uiOutput(outputId = 'dR'),
                             uiOutput(outputId = 'dD')
                             )
-						)
+						),
+                    box(width = "100%",
+                        title = "Basic Reproduction Number",
+                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                        verbatimTextOutput(outputId = "R0")
+                        )
                     ),
                 # actionButton("slider.hide.beta", "hide beta"),
                 box(width = 6, 
@@ -377,12 +382,7 @@ body = dashboardBody(
                         title = "Daily Incidence and Deaths",
                         collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
                         plotlyOutput(outputId = "SEIRD.changes")
-                        ),
-                    box(width = "100%",
-                        title = "Basic Reproduction Number",
-                        collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                        verbatimTextOutput(outputId = "R0")
-                        ),
+                        )
                     )
                 )
         )
@@ -410,8 +410,13 @@ body = dashboardBody(
 									   uiOutput(outputId = 'sc.dI'),
 									   uiOutput(outputId = 'sc.dR'),
 									   uiOutput(outputId = 'sc.dD')
-							 )
-						 )
+                                       )
+                             ),
+                        box(width = "100%",
+							 title = "Basic Reproduction Number",
+							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+							 verbatimTextOutput(outputId = "sc.R0")
+                             )
 					 ),
 					 box(width = 6, 
 						 title="Simulation",
@@ -425,11 +430,6 @@ body = dashboardBody(
 							 title = "Daily Incidence and Deaths",
 							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
 							 plotlyOutput(outputId = "SEIaImIsRD.changes")
-						 ),
-						 box(width = "100%",
-							 title = "Basic Reproduction Number",
-							 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-							 verbatimTextOutput(outputId = "sc.R0")
 						 )
 					 )
 			     )
@@ -581,6 +581,11 @@ body = dashboardBody(
                                         #uiOutput(outputId = 'ru.dD_Y')
                                         )
                                 ),
+                            box(width = "100%",
+                                title = "Basic Reproduction Number",
+                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
+                                verbatimTextOutput(outputId = "ru.R0")
+                                ),
                             box(width = "100%", 
                                 title="Files loaded ",
                                 collapsible = TRUE, status = "primary", solidHeader = TRUE, collapsed = FALSE,
@@ -599,11 +604,6 @@ body = dashboardBody(
                                 title = "Daily Incidence and Deaths",
                                 collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
                                 plotlyOutput(outputId = "SEIRD_RU.changes")
-                                ),
-                            box(width = "100%",
-                                title = "Basic Reproduction Number",
-                                collapsible = TRUE, status = "primary", solidHeader = FALSE, collapsed = FALSE,
-                                verbatimTextOutput(outputId = "ru.R0")
                                 )
                             )
                         )

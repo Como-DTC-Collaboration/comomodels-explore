@@ -64,13 +64,22 @@ shiny::runUrl("https://github.com/Como-DTC-Collaboration/comomodels-explore/arch
 git clone git@github.com:Como-DTC-Collaboration/comomodels-explore.git
 cd comomodels-explore/
 
-# in terminal, run the app:
-Rscript ./app.R
-
-a local URL will appear on your terminal, e.g.:
-
+# in terminal, start an R environment
+R
+    
+# in the R environment, make sure your working directory is comomodels-explore, then load all dependencies and run the app:
+setwd(".")
+devtools::load_all()
+## if you are using an interactive R session (e.g. RStudio):
+shiny::runApp(appDir = ".")
+## otherwise, set `launch.browser=FALSE` if you are using a non-interactive R session and manually launch the browser in the next step:
+shiny::runApp(appDir = ".", launch.browser=FALSE)
+```
+Either way, a local URL will appear on your R console, e.g.:
+```
 Listening on http://127.0.0.1:5554
 ```
+
 The corresponding interface pop out may automatically pop out. If not, you can manually copy-and-paste the above URL to any web server. 
 
 You can now play around with the parameters on the interface.

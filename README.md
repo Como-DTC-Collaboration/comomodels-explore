@@ -72,7 +72,6 @@ In the R environment, make sure your working directory is `comomodels-explore` a
 
 ``` r
 setwd(".")
-devtools::load_all()
 ## if you are using an interactive R session (e.g. RStudio):
 shiny::runApp(appDir = ".")
 ## otherwise, set `launch.browser=FALSE` and manually launch the browser in the next step:
